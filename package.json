@@ -1,0 +1,40 @@
+{
+  "name": "podcast-commerce-mcp",
+  "version": "0.1.0",
+  "description": "Podcast Commerce Intelligence MCP Server - Extract product mentions, score recommendations, and track trends from podcast transcripts. Built for the agent-to-agent economy.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Since Today Studio <team@sincetoday.com>",
+  "engines": { "node": ">=20.0.0" },
+  "bin": { "podcast-commerce-mcp": "./dist/cli.js" },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" }
+  },
+  "files": ["dist", "data", "README.md", "LICENSE", ".env.example"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/cli.ts",
+    "start": "node dist/cli.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "better-sqlite3": "^12.6.2",
+    "openai": "^6.25.0",
+    "youtube-transcript": "^1.2.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.15.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.0",
+    "vitest": "^4.0.18"
+  },
+  "keywords": ["mcp", "model-context-protocol", "podcast", "commerce", "ner", "product-extraction", "x402", "ai-agent", "agent-to-agent"]
+}

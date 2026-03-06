@@ -51,6 +51,17 @@ const CORS_HEADERS = {
 };
 
 // ============================================================================
+// CLOUDFLARE TYPES
+// (Stub — install @cloudflare/workers-types when deploying to Wrangler)
+// ============================================================================
+
+interface KVNamespace {
+  get(key: string): Promise<string | null>;
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+  delete(key: string): Promise<void>;
+}
+
+// ============================================================================
 // CLOUDFLARE ENV
 // ============================================================================
 

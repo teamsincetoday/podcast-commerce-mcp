@@ -31,6 +31,14 @@ const SERVER_NAME = "podcast-commerce-intelligence";
 const SERVER_VERSION = "0.1.0";
 const TOOL_PRICE_USD = 0.001;
 
+// Input size limits (FIND-4 — prevent oversized payloads reaching OpenAI)
+export const TRANSCRIPT_MAX_CHARS = 100_000; // ~50k words, covers any real episode
+export const ID_MAX_CHARS = 200;
+export const API_KEY_MAX_CHARS = 200;
+export const CATEGORY_FILTER_ITEM_MAX = 50;
+export const CATEGORY_FILTER_ARRAY_MAX = 20;
+export const EPISODE_IDS_ARRAY_MAX = 20;
+
 // ============================================================================
 // AUTH
 // ============================================================================
@@ -134,24 +142,28 @@ export function createServer(): McpServer {
 
   server.tool(
     "extract_podcast_products",
-    "Extract product and brand mentions from a podcast transcript. Returns structured data including product name, category, confidence score, recommendation strength, and sponsor segments. Supports caching by episode_id.",
+    "Extract affiliate products, sponsored brands, and product recommendations from a podcast transcript. Returns each product's name, category (physical_goods, saas, course, book, service), confidence score, recommendation strength, and sponsor flag. Use for podcast monetization intelligence, affiliate program discovery, and brand mention tracking. Caches results by episode_id for cross-episode trend analysis.",
     {
       transcript: z
         .string()
         .min(1)
+        .max(TRANSCRIPT_MAX_CHARS)
         .describe("Raw transcript text OR a URL to a .txt transcript file"),
       episode_id: z
         .string()
+        .max(ID_MAX_CHARS)
         .optional()
         .describe("Optional episode identifier for caching and trend tracking"),
       category_filter: z
-        .array(z.string())
+        .array(z.string().max(CATEGORY_FILTER_ITEM_MAX))
+        .max(CATEGORY_FILTER_ARRAY_MAX)
         .optional()
         .describe(
           "Optional list of categories to include: physical_goods, saas, course, book, service, affiliate, other"
         ),
       api_key: z
         .string()
+        .max(API_KEY_MAX_CHARS)
         .optional()
         .describe("Optional API key for paid access beyond the free tier"),
     },
@@ -237,18 +249,21 @@ export function createServer(): McpServer {
 
   server.tool(
     "analyze_episode_sponsors",
-    "Identify sponsor segments in a podcast episode and estimate read-through rates. Returns sponsor list, read type (host-read, mid-roll, etc.), call-to-action, and aggregate metrics. Uses cached extraction if episode_id was previously processed.",
+    "Identify and score podcast sponsor segments — host-read ads, mid-roll spots, pre-roll. Returns sponsor name, ad placement type, call-to-action URL, estimated read-through rate, and aggregate sponsor revenue metrics. Use for podcast advertising intelligence, CPM estimation, and sponsor outreach research. Reuses cached extraction when episode_id matches a prior extract_podcast_products call.",
     {
       transcript: z
         .string()
         .min(1)
+        .max(TRANSCRIPT_MAX_CHARS)
         .describe("Raw transcript text OR a URL to a .txt transcript file"),
       episode_id: z
         .string()
+        .max(ID_MAX_CHARS)
         .optional()
         .describe("Optional episode identifier — uses cached extraction if available"),
       api_key: z
         .string()
+        .max(API_KEY_MAX_CHARS)
         .optional()
         .describe("Optional API key for paid access beyond the free tier"),
     },
@@ -322,20 +337,23 @@ export function createServer(): McpServer {
 
   server.tool(
     "track_product_trends",
-    "Compare product mentions across multiple podcast episodes to identify rising, stable, and falling product trends. Requires episodes to have been previously extracted (via extract_podcast_products) and cached by episode_id.",
+    "Compare affiliate product and brand mention frequency across multiple podcast episodes to detect rising, stable, and declining trends. Returns trend velocity, mention count per episode, and category breakdown. Use for podcast affiliate marketing optimization, seasonal product tracking, and sponsor category analysis. Requires prior extract_podcast_products calls for each episode_id.",
     {
       episode_ids: z
-        .array(z.string())
+        .array(z.string().max(ID_MAX_CHARS))
         .min(1)
+        .max(EPISODE_IDS_ARRAY_MAX)
         .describe(
           "List of episode IDs to analyze. Each must have been previously extracted via extract_podcast_products."
         ),
       category_filter: z
-        .array(z.string())
+        .array(z.string().max(CATEGORY_FILTER_ITEM_MAX))
+        .max(CATEGORY_FILTER_ARRAY_MAX)
         .optional()
         .describe("Optional category filter to narrow trend analysis"),
       api_key: z
         .string()
+        .max(API_KEY_MAX_CHARS)
         .optional()
         .describe("Optional API key for paid access beyond the free tier"),
     },

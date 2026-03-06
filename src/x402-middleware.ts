@@ -4,7 +4,7 @@
  * Handles three authentication/payment methods:
  * 1. x402 protocol (HTTP 402 Payment Required) -- Coinbase micropayments via USDC on Base
  * 2. API key authentication -- fallback for agents that can't do x402 yet
- * 3. Free tier -- 5 calls/day per agent (tracked by wallet address or IP)
+ * 3. Free tier -- 200 calls/day per agent (tracked by wallet address or IP, no auth required)
  *
  * Flow:
  *   Request -> check API key -> check x402 payment header -> check free tier -> 402 response
@@ -367,7 +367,7 @@ export class PaymentMiddleware {
     const price = this.getToolPrice(context.toolName, context.toolParams);
     return {
       authorized: false,
-      reason: `Free tier exhausted (${this.config.freeTierDailyLimit} calls/day). Payment required.`,
+      reason: `Free tier exhausted (${this.config.freeTierDailyLimit} calls/day). To continue, set MCP_API_KEYS=your-key in your MCP config, or contact team@sincetoday.com for an API key.`,
       requiredPayment: this.buildPaymentRequiredInfo(context.toolName, price),
     };
   }
@@ -721,7 +721,7 @@ export function createPaymentMiddleware(
   const config: PaymentConfig = {
     enabled: overrides?.enabled ?? false,
     walletAddress: overrides?.walletAddress ?? process.env.X402_WALLET_ADDRESS,
-    freeTierDailyLimit: overrides?.freeTierDailyLimit ?? 5,
+    freeTierDailyLimit: overrides?.freeTierDailyLimit ?? 200,
     pricing: overrides?.pricing ?? { ...DEFAULT_TOOL_PRICING },
     apiKeys: overrides?.apiKeys ?? parseApiKeys(process.env.MCP_API_KEYS),
     facilitatorUrl:

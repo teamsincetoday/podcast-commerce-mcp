@@ -1,0 +1,67 @@
+# Smithery listing for podcast-commerce-mcp
+# Place this as smithery.yaml in the package root before publishing to Smithery
+
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      - openaiApiKey
+    properties:
+      openaiApiKey:
+        type: string
+        description: OpenAI API key for GPT-4o-mini product extraction
+      apiKeys:
+        type: string
+        description: Comma-separated paid API keys (unlocks unlimited calls)
+      cacheDir:
+        type: string
+        description: SQLite cache path (default ./data/cache.db)
+  commandFunction: |-
+    (config) => ({
+      command: "npx",
+      args: ["podcast-commerce-mcp"],
+      env: {
+        OPENAI_API_KEY: config.openaiApiKey,
+        MCP_API_KEYS: config.apiKeys ?? "",
+        CACHE_DIR: config.cacheDir ?? "./data/cache.db",
+      }
+    })
+
+# --- Smithery Marketplace Metadata ---
+# (These fields are configured via the Smithery web UI, not this file)
+# name: podcast-commerce-mcp
+# display_name: Podcast Commerce Intelligence
+# tagline: Extract product mentions, sponsors, and trends from podcast transcripts
+# description: |
+#   Give it a podcast transcript. It extracts every commercially interesting product,
+#   brand, and sponsor mention — with speaker attribution, confidence scores, and
+#   recommendation strength.
+#
+#   3 MCP tools for podcast commerce intelligence:
+#   - extract_podcast_products: Full product extraction with NER, speaker attribution,
+#     sentiment scoring, and category classification (SaaS, physical goods, courses, etc.)
+#   - analyze_episode_sponsors: Identify sponsor segments, read types (host-read vs produced),
+#     and estimate listener read-through rates
+#   - track_product_trends: Compare product mention frequency across episodes to spot
+#     what's trending in a podcast's product ecosystem
+#
+#   Supports YouTube URLs (auto-transcript fetch) and raw transcript text.
+#
+#   Free tier: 200 extracts/day. Paid: $0.001/call with API key.
+#
+# categories:
+#   - commerce
+#   - podcast-intelligence
+#   - content-extraction
+#   - affiliate-marketing
+#
+# pricing:
+#   model: freemium
+#   free_tier: 200 calls/day per agent
+#   paid_tier: $0.001 per call (API key auth)
+#
+# links:
+#   npm: https://www.npmjs.com/package/podcast-commerce-mcp
+#   github: https://github.com/sincetoday/podcast-commerce-mcp
+#   homepage: https://sincetoday.com

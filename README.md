@@ -97,7 +97,7 @@ Requires episodes to be previously extracted and cached.
 
 ## Pricing
 
-- Free tier: 5 extractions/day per agent
+- Free tier: 200 calls/day per agent (no API key required)
 - Paid: $0.001/call — set `MCP_API_KEYS` with valid keys
 
 ## Environment Variables

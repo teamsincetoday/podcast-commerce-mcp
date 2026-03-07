@@ -1,0 +1,31 @@
+# podcast-commerce-mcp
+
+MCP server for podcast commerce intelligence. Extracts affiliate products, sponsor segments, and brand recommendations from podcast transcripts.
+
+## Tools
+
+### extract_podcast_products
+- Input: transcript text or URL (up to 100,000 chars), optional episode_id for caching, optional category_filter
+- Output: products array [{name, category, mention_context, speaker, confidence, recommendation_strength, affiliate_link, mention_count}], sponsor_segments array, _meta
+- Typical output: 300-600 tokens
+- Latency: 2-4 seconds (OpenAI GPT-4o-mini)
+- Price: free for first 200 calls/day, $0.001/call with API key
+
+### analyze_episode_sponsors
+- Input: same as extract_podcast_products; reuses cache if episode_id matches prior extraction
+- Output: sponsors array [{sponsor_name, segment_start_context, read_type, estimated_read_through, call_to_action}], sponsor_count, avg_read_through
+- Typical output: 150-300 tokens
+- Latency: 2-4 seconds (or <100ms if cache hit)
+
+### track_product_trends
+- Input: episode_ids (list of previously extracted episode IDs), optional category_filter
+- Output: trends array [{name, category, trend (rising|stable|falling), episodes_present, total_mentions}]
+- Typical output: 200-400 tokens
+- Latency: <100ms (local computation, no OpenAI call)
+- Requires: prior extract_podcast_products calls for each episode_id
+
+## Categories
+physical_goods, saas, course, service, supplement, media, event, other
+
+## Auth
+Set MCP_API_KEYS=your-key in your MCP config for paid access. Free tier: 200 calls/day, no key required.

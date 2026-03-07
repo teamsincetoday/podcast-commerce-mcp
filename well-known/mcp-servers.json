@@ -1,0 +1,42 @@
+{
+  "servers": [
+    {
+      "name": "podcast-commerce-intelligence",
+      "version": "0.1.0",
+      "description": "Extract affiliate products, sponsors, and brand recommendations from podcast transcripts. Returns structured product data with confidence scores, recommendation strength, and affiliate links.",
+      "transport": "streamable-http",
+      "auth": {
+        "type": "free-tier",
+        "free_calls_per_day": 200,
+        "paid_method": "api_key",
+        "price_per_call_usd": 0.001
+      },
+      "tools": [
+        {
+          "name": "extract_podcast_products",
+          "description": "Extract affiliate products, sponsored brands, and product recommendations from a podcast transcript.",
+          "input_tokens_typical": 12000,
+          "output_tokens_typical": 400,
+          "latency_ms_typical": 2500,
+          "requires_openai": true
+        },
+        {
+          "name": "analyze_episode_sponsors",
+          "description": "Identify sponsor segments and estimate read-through rates and CPM.",
+          "input_tokens_typical": 12000,
+          "output_tokens_typical": 200,
+          "latency_ms_typical": 2500,
+          "requires_openai": true
+        },
+        {
+          "name": "track_product_trends",
+          "description": "Compare product mentions across multiple episodes to detect rising and falling trends.",
+          "input_tokens_typical": 50,
+          "output_tokens_typical": 300,
+          "latency_ms_typical": 50,
+          "requires_openai": false
+        }
+      ]
+    }
+  ]
+}

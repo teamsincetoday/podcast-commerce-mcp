@@ -13,11 +13,11 @@ PAYMENT_ENABLED = "false"
 # Then replace REPLACE_WITH_KV_ID below with the IDs from the output.
 [[kv_namespaces]]
 binding = "PODCAST_CACHE"
-id = "REPLACE_WITH_KV_ID"
+id = "eab69549b80e470da31402184bf3cbd1"
 
 [[kv_namespaces]]
 binding = "RATE_LIMITS"
-id = "REPLACE_WITH_KV_ID"
+id = "7ba2a41aac5f4b488cb72845d0761cf4"
 
 # Secrets — set with:
 #   wrangler secret put OPENAI_API_KEY

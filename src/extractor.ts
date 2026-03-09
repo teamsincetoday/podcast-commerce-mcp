@@ -91,7 +91,7 @@ Extract all product, brand, and service mentions from the provided podcast trans
 For each product/brand mention:
 - name: Exact product or brand name (string)
 - category: One of exactly: physical_goods, saas, course, service, supplement, media, event, other
-- mention_context: Exact sentence or phrase containing the mention (max 200 chars)
+- mention_context: Exact sentence or phrase containing the mention (max 100 chars)
 - speaker: Detected speaker ("host", "guest", or name from transcript), or null if unknown
 - confidence: 0.0-1.0 — how confident this is a genuine product/brand mention
 - recommendation_strength: "strong" (must-have/highly recommend), "moderate" (I use/recommend), "mention" (neutral reference), "negative" (warning/avoid)
@@ -99,7 +99,7 @@ For each product/brand mention:
 
 Also identify sponsor segments:
 - sponsor_name: Sponsor's brand name
-- segment_start_context: Opening phrase of the sponsor read (max 100 chars)
+- segment_start_context: Opening phrase of the sponsor read (max 50 chars)
 - read_type: "host_read", "mid_roll", "pre_roll", "post_roll", or "unknown"
 - estimated_read_through: 0.0-1.0 (0=skippable, 1=very compelling)
 - call_to_action: URL, promo code, or CTA text, or null
@@ -161,7 +161,7 @@ export function normalizeProducts(
       productMap.set(key, {
         name,
         category,
-        mention_context: (p.mention_context ?? "").slice(0, 200),
+        mention_context: (p.mention_context ?? "").slice(0, 100),
         speaker: p.speaker ?? null,
         confidence,
         recommendation_strength: strength,
@@ -191,7 +191,7 @@ export function normalizeSponsorSegments(
 
       return {
         sponsor_name: s.sponsor_name.trim(),
-        segment_start_context: (s.segment_start_context ?? "").slice(0, 100),
+        segment_start_context: (s.segment_start_context ?? "").slice(0, 50),
         read_type: readType,
         estimated_read_through: Math.min(
           Math.max(Number(s.estimated_read_through) || 0, 0),
@@ -335,7 +335,6 @@ export function buildSponsorAnalysis(extraction: ExtractionResult): SponsorAnaly
 
   return {
     sponsors,
-    sponsor_count,
     avg_read_through: Math.round(avg_read_through * 100) / 100,
     _meta: {},
   };
@@ -358,7 +357,7 @@ export function computeTrends(extractions: ExtractionResult[]): TrendReport {
   const totalEpisodes = extractions.length;
 
   if (totalEpisodes === 0) {
-    return { trends: [], episode_ids: [], analysis_window_episodes: 0 };
+    return { trends: [], episode_ids: [] };
   }
 
   // Aggregate: product name → { episodes_present, total_mentions, category }
@@ -438,6 +437,5 @@ export function computeTrends(extractions: ExtractionResult[]): TrendReport {
   return {
     trends,
     episode_ids,
-    analysis_window_episodes: totalEpisodes,
   };
 }

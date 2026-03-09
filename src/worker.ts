@@ -7,6 +7,7 @@
  *
  * Routes:
  *   GET  /health  — health check
+ *   GET  /usage   — traction dashboard (tool call counts, 7-day)
  *   *    /mcp     — MCP Streamable HTTP endpoint (stateless)
  *   OPTIONS *     — CORS preflight
  */
@@ -23,6 +24,7 @@ import {
   buildSponsorAnalysis,
   computeTrends,
 } from "./extractor.js";
+import { CloudflareMetering } from "./metering-cloudflare.js";
 import type { ExtractionResult, AuthResult } from "./types.js";
 
 // ============================================================================
@@ -32,6 +34,7 @@ import type { ExtractionResult, AuthResult } from "./types.js";
 const SERVER_NAME = "podcast-commerce-intelligence";
 const SERVER_VERSION = "0.1.0";
 const TOOL_PRICE_USD = 0.001;
+const TOOL_NAMES = ["extract_podcast_products", "analyze_episode_sponsors", "track_product_trends"] as const;
 
 export const FREE_TIER_DAILY_LIMIT = 200;
 export const TRANSCRIPT_MAX_CHARS = 100_000;
@@ -52,13 +55,16 @@ const CORS_HEADERS = {
 
 // ============================================================================
 // CLOUDFLARE TYPES
-// (Stub — install @cloudflare/workers-types when deploying to Wrangler)
 // ============================================================================
 
 interface KVNamespace {
   get(key: string): Promise<string | null>;
   put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
   delete(key: string): Promise<void>;
+}
+
+interface ExecutionContext {
+  waitUntil(promise: Promise<unknown>): void;
 }
 
 // ============================================================================
@@ -68,6 +74,7 @@ interface KVNamespace {
 export interface Env {
   PODCAST_CACHE: KVNamespace;
   RATE_LIMITS: KVNamespace;
+  TELEMETRY?: KVNamespace;
   OPENAI_API_KEY: string;
   MCP_API_KEYS?: string;
   PAYMENT_ENABLED?: string;
@@ -123,7 +130,7 @@ async function authorize(env: Env, request: Request, apiKey?: string): Promise<A
 
   return {
     authorized: false,
-    reason: `Free tier exhausted (${FREE_TIER_DAILY_LIMIT} calls/day per IP). Set api_key param or contact team@sincetoday.com.`,
+    reason: `Free tier exhausted (${FREE_TIER_DAILY_LIMIT} calls/day per IP). Options: pay per call via x402, set api_key param, or contact team@sincetoday.com for enterprise access.`,
   };
 }
 
@@ -159,6 +166,7 @@ function errorResult(message: string) {
 }
 
 function paymentRequiredResult(reason: string) {
+  const resetAt = new Date(new Date().setUTCHours(24, 0, 0, 0)).toISOString();
   return {
     content: [
       {
@@ -168,6 +176,12 @@ function paymentRequiredResult(reason: string) {
           message: reason,
           price_usd: TOOL_PRICE_USD,
           free_tier_limit: FREE_TIER_DAILY_LIMIT,
+          reset_at: resetAt,
+          upgrade: {
+            pay_per_call: { method: "x402", price_usd: TOOL_PRICE_USD, doc: "https://x402.org" },
+            api_key: { method: "api_key", param: "api_key", contact: "team@sincetoday.com" },
+            enterprise: { method: "enterprise", description: "Custom rate limits, private registry, SLA. Contact team@sincetoday.com." },
+          },
         }),
       },
     ],
@@ -179,7 +193,16 @@ function paymentRequiredResult(reason: string) {
 // MCP SERVER FACTORY
 // ============================================================================
 
-function createMcpServer(env: Env, request: Request): McpServer {
+/** Map AuthResult payment method to metering method (disabled → free_tier). */
+function meteringMethod(method: string | undefined): "api_key" | "free_tier" | "x402" {
+  if (method === "api_key") return "api_key";
+  if (method === "x402") return "x402";
+  return "free_tier";
+}
+
+function createMcpServer(env: Env, request: Request, ctx: ExecutionContext): McpServer {
+  const metering = env.TELEMETRY ? new CloudflareMetering(env.TELEMETRY) : null;
+
   // Inject OpenAI client with env secret (Workers-safe, no process.env)
   setOpenAIClient(new OpenAI({ apiKey: env.OPENAI_API_KEY }));
 
@@ -228,6 +251,7 @@ function createMcpServer(env: Env, request: Request): McpServer {
         if (cached) {
           cached._meta.cache_hit = true;
           cached._meta.processing_time_ms = Date.now() - start;
+          if (metering) ctx.waitUntil(metering.record({ toolName: "extract_podcast_products", paymentMethod: meteringMethod(auth.method), processingTimeMs: Date.now() - start, success: true }));
           return { content: [{ type: "text", text: JSON.stringify(cached) }] };
         }
       }
@@ -247,8 +271,10 @@ function createMcpServer(env: Env, request: Request): McpServer {
           },
         };
         if (episode_id) await cacheSet(env.PODCAST_CACHE, episodeId, result);
+        if (metering) ctx.waitUntil(metering.record({ toolName: "extract_podcast_products", paymentMethod: meteringMethod(auth.method), amountUsd: auth.method === "api_key" ? TOOL_PRICE_USD : 0, processingTimeMs: Date.now() - start, success: true }));
         return { content: [{ type: "text", text: JSON.stringify(result) }] };
       } catch (err) {
+        if (metering) ctx.waitUntil(metering.record({ toolName: "extract_podcast_products", paymentMethod: meteringMethod(auth.method), processingTimeMs: Date.now() - start, success: false }));
         const message = err instanceof Error ? err.message : String(err);
         return errorResult(`Extraction failed: ${message}`);
       }
@@ -311,8 +337,10 @@ function createMcpServer(env: Env, request: Request): McpServer {
           processing_time_ms: Date.now() - start,
           cache_hit: fromCache,
         };
+        if (metering) ctx.waitUntil(metering.record({ toolName: "analyze_episode_sponsors", paymentMethod: meteringMethod(auth.method), amountUsd: auth.method === "api_key" ? TOOL_PRICE_USD : 0, processingTimeMs: Date.now() - start, success: true }));
         return { content: [{ type: "text", text: JSON.stringify(analysis) }] };
       } catch (err) {
+        if (metering) ctx.waitUntil(metering.record({ toolName: "analyze_episode_sponsors", paymentMethod: meteringMethod(auth.method), processingTimeMs: Date.now() - start, success: false }));
         const message = err instanceof Error ? err.message : String(err);
         return errorResult(`Sponsor analysis failed: ${message}`);
       }
@@ -383,8 +411,10 @@ function createMcpServer(env: Env, request: Request): McpServer {
           ai_cost_usd: 0,
           cache_hit: true,
         };
+        if (metering) ctx.waitUntil(metering.record({ toolName: "track_product_trends", paymentMethod: meteringMethod(auth.method), amountUsd: auth.method === "api_key" ? TOOL_PRICE_USD : 0, processingTimeMs: Date.now() - start, success: true }));
         return { content: [{ type: "text", text: JSON.stringify(report) }] };
       } catch (err) {
+        if (metering) ctx.waitUntil(metering.record({ toolName: "track_product_trends", paymentMethod: meteringMethod(auth.method), processingTimeMs: Date.now() - start, success: false }));
         const message = err instanceof Error ? err.message : String(err);
         return errorResult(`Trend analysis failed: ${message}`);
       }
@@ -399,7 +429,7 @@ function createMcpServer(env: Env, request: Request): McpServer {
 // ============================================================================
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
     // CORS preflight
@@ -415,13 +445,28 @@ export default {
       );
     }
 
+    // Usage dashboard (traction monitoring)
+    if (url.pathname === "/usage" && request.method === "GET") {
+      if (!env.TELEMETRY) {
+        return new Response(JSON.stringify({ error: "TELEMETRY KV not configured" }), {
+          status: 503, headers: { "Content-Type": "application/json", ...CORS_HEADERS },
+        });
+      }
+      const metering = new CloudflareMetering(env.TELEMETRY);
+      const summaries = await Promise.all(TOOL_NAMES.map((t) => metering.getToolSummary(t)));
+      return new Response(
+        JSON.stringify({ tools: summaries, as_of: new Date().toISOString() }),
+        { headers: { "Content-Type": "application/json", ...CORS_HEADERS } }
+      );
+    }
+
     // MCP Streamable HTTP endpoint (stateless)
     if (url.pathname === "/mcp" || url.pathname === "/") {
       const transport = new WebStandardStreamableHTTPServerTransport({
         sessionIdGenerator: undefined, // stateless — no session tracking required
       });
 
-      const server = createMcpServer(env, request);
+      const server = createMcpServer(env, request, ctx);
       await server.connect(transport);
 
       const response = await transport.handleRequest(request);

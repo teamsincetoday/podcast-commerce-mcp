@@ -76,7 +76,6 @@ export interface ExtractionResult {
 
 export interface SponsorAnalysis {
   sponsors: SponsorSegment[];
-  sponsor_count: number;
   avg_read_through: number;
   _meta: Record<string, unknown>;
 }
@@ -96,7 +95,6 @@ export interface ProductTrend {
 export interface TrendReport {
   trends: ProductTrend[];
   episode_ids: string[];
-  analysis_window_episodes: number;
   _meta?: Record<string, unknown>;
 }
 

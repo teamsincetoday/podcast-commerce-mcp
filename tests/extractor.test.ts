@@ -230,7 +230,7 @@ describe("computeTrends", () => {
   it("returns empty report for empty input", () => {
     const report = computeTrends([]);
     expect(report.trends).toHaveLength(0);
-    expect(report.analysis_window_episodes).toBe(0);
+    expect(report.episode_ids).toHaveLength(0);
   });
 
   const makeExtraction = (
@@ -302,7 +302,7 @@ describe("computeTrends", () => {
     const report = computeTrends(extractions);
     expect(report.episode_ids).toContain("ep-alpha");
     expect(report.episode_ids).toContain("ep-beta");
-    expect(report.analysis_window_episodes).toBe(2);
+    expect(report.episode_ids).toHaveLength(2);
   });
 });
 

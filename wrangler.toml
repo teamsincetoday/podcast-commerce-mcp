@@ -19,6 +19,10 @@ id = "eab69549b80e470da31402184bf3cbd1"
 binding = "RATE_LIMITS"
 id = "7ba2a41aac5f4b488cb72845d0761cf4"
 
+[[kv_namespaces]]
+binding = "TELEMETRY"
+id = "a3fcce952bf54ab7b63813aea97886e3"
+
 # Secrets — set with:
 #   wrangler secret put OPENAI_API_KEY
 #   wrangler secret put MCP_API_KEYS   (comma-separated list of valid keys)

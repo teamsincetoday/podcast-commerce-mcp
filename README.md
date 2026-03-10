@@ -95,6 +95,42 @@ Returns:
 
 Requires episodes to be previously extracted and cached.
 
+## Example Output
+
+Real extraction from a Huberman Lab episode transcript (eval score: **F1=0.95**, $0.000365/call, 8220ms):
+
+```json
+{
+  "episode_id": "huberman-ep-312",
+  "products": [
+    {
+      "name": "AG1 (Athletic Greens)",
+      "category": "supplement",
+      "mention_context": "today's episode is brought to you by AG1. I've been taking it every morning for six months",
+      "confidence": 0.97,
+      "recommendation_strength": "strong"
+    },
+    {
+      "name": "Oura Ring",
+      "category": "physical_goods",
+      "mention_context": "I've been wearing it for sleep tracking for two years. They're not a sponsor, just a genuine rec",
+      "confidence": 0.95,
+      "recommendation_strength": "strong"
+    }
+  ],
+  "sponsor_segments": [
+    {
+      "sponsor_name": "AG1",
+      "read_type": "host_read",
+      "estimated_read_through": 0.72,
+      "call_to_action": "code HUBERMAN for a free year's supply of Vitamin D"
+    }
+  ]
+}
+```
+
+See `/examples` endpoint for full output with value narrative: `https://podcast-commerce-mcp.sincetoday.workers.dev/examples`
+
 ## Pricing
 
 - Free tier: 200 calls/day per agent (no API key required)

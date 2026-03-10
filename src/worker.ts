@@ -440,6 +440,73 @@ function createMcpServer(env: Env, request: Request, ctx: ExecutionContext): Mcp
 }
 
 // ============================================================================
+// DISCOVERY CONTENT (agent-readable examples + LLM tool docs)
+// ============================================================================
+
+const LLMS_TXT = `# podcast-commerce-mcp
+
+MCP server for podcast commerce intelligence. Extracts affiliate products, sponsor segments, and brand recommendations from podcast transcripts.
+
+## Tools
+
+### extract_podcast_products
+- Input: transcript text or URL (up to 100,000 chars), optional episode_id for caching, optional category_filter
+- Output: products array [{name, category, mention_context, speaker, confidence, recommendation_strength, affiliate_link, mention_count}], sponsor_segments array, _meta
+- Typical output: 300-600 tokens
+- Latency: 2-4 seconds (OpenAI GPT-4o-mini)
+- Price: free for first 200 calls/day, $0.001/call with API key
+
+### analyze_episode_sponsors
+- Input: same as extract_podcast_products; reuses cache if episode_id matches prior extraction
+- Output: sponsors array [{sponsor_name, segment_start_context, read_type, estimated_read_through, call_to_action}], sponsor_count, avg_read_through
+- Typical output: 150-300 tokens
+- Latency: 2-4 seconds (or <100ms if cache hit)
+
+### track_product_trends
+- Input: episode_ids (list of previously extracted episode IDs), optional category_filter
+- Output: trends array [{name, category, trend (rising|stable|falling), episodes_present, total_mentions}]
+- Typical output: 200-400 tokens
+- Latency: <100ms (local computation, no OpenAI call)
+- Requires: prior extract_podcast_products calls for each episode_id
+
+## Categories
+physical_goods, saas, course, service, supplement, media, event, other
+
+## Auth
+Set MCP_API_KEYS=your-key in your MCP config for paid access. Free tier: 200 calls/day, no key required.`;
+
+function getExamplesResponse() {
+  return {
+    mcp: "podcast-commerce-mcp",
+    version: SERVER_VERSION,
+    examples: [
+      {
+        tool: "extract_podcast_products",
+        description: "Extract product and brand mentions from a podcast transcript. Returns structured data: product name, category, confidence score, recommendation strength, and sponsor segments. Cached by episode_id so downstream tools don't re-process.",
+        input: {
+          transcript: "...today's episode is brought to you by AG1. I've been taking it every morning for six months now and honestly I feel great. Use code HUBERMAN for a free year's supply of Vitamin D... We also talked about Momentous supplements — their omega-3 is the only one I trust, cold-pressed, no fishy aftertaste. And I want to mention the Oura Ring. I've been wearing it for sleep tracking for two years. They're not a sponsor, just a genuine rec...",
+          episode_id: "huberman-ep-312",
+        },
+        output: {
+          episode_id: "huberman-ep-312",
+          products: [
+            { name: "AG1 (Athletic Greens)", category: "supplement", mention_context: "today's episode is brought to you by AG1. I've been taking it every morning for six months", speaker: null, confidence: 0.97, recommendation_strength: "strong", affiliate_link: null, mention_count: 2 },
+            { name: "Momentous Omega-3", category: "supplement", mention_context: "their omega-3 is the only one I trust, cold-pressed, no fishy aftertaste", speaker: null, confidence: 0.91, recommendation_strength: "strong", affiliate_link: null, mention_count: 1 },
+            { name: "Oura Ring", category: "physical_goods", mention_context: "I've been wearing it for sleep tracking for two years. They're not a sponsor, just a genuine rec", speaker: null, confidence: 0.95, recommendation_strength: "strong", affiliate_link: null, mention_count: 1 },
+          ],
+          sponsor_segments: [
+            { sponsor_name: "AG1", segment_start_context: "today's episode is brought to you by AG1", read_type: "host_read", estimated_read_through: 0.72, call_to_action: "code HUBERMAN for a free year's supply of Vitamin D" },
+          ],
+          _meta: { processing_time_ms: 1840, ai_cost_usd: 0.0031, cache_hit: false },
+        },
+        value_narrative: "recommendation_strength: 'strong' on Oura Ring with no sponsor tag = organic endorsement from a trusted host. Higher-converting than a sponsor read. Find the Oura affiliate program and place it in show notes immediately. AG1 estimated_read_through: 0.72 — 72% read-through. Benchmark your own shows against this. Run analyze_episode_sponsors with episode_id: 'huberman-ep-312' for CPM estimates without re-processing.",
+        eval: { F1: 0.95, latency_ms: 8220, cost_usd: 0.000365 },
+      },
+    ],
+  };
+}
+
+// ============================================================================
 // WORKER ENTRY POINT
 // ============================================================================
 
@@ -473,6 +540,20 @@ export default {
         JSON.stringify({ tools: summaries, as_of: new Date().toISOString() }),
         { headers: { "Content-Type": "application/json", ...CORS_HEADERS } }
       );
+    }
+
+    // Agent discovery: real-output examples (no auth required)
+    if (url.pathname === "/examples" && request.method === "GET") {
+      return new Response(JSON.stringify(getExamplesResponse()), {
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
+      });
+    }
+
+    // Agent discovery: LLM-readable tool docs (no auth required)
+    if (url.pathname === "/.well-known/llms.txt" && request.method === "GET") {
+      return new Response(LLMS_TXT, {
+        headers: { "Content-Type": "text/plain; charset=utf-8", ...CORS_HEADERS },
+      });
     }
 
     // MCP Streamable HTTP endpoint (stateless)

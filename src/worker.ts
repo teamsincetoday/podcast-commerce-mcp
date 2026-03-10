@@ -244,7 +244,10 @@ function createMcpServer(env: Env, request: Request, ctx: ExecutionContext): Mcp
       const episodeId = episode_id ?? randomUUID();
 
       const auth = await authorize(env, request, api_key);
-      if (!auth.authorized) return paymentRequiredResult(auth.reason ?? "Payment required");
+      if (!auth.authorized) {
+        if (metering) ctx.waitUntil(metering.record({ toolName: "_auth_failure", paymentMethod: "free_tier", processingTimeMs: 0, success: false }));
+        return paymentRequiredResult(auth.reason ?? "Payment required");
+      }
 
       if (episode_id) {
         const cached = await cacheGet(env.PODCAST_CACHE, episodeId);
@@ -275,7 +278,9 @@ function createMcpServer(env: Env, request: Request, ctx: ExecutionContext): Mcp
         return { content: [{ type: "text", text: JSON.stringify(result) }] };
       } catch (err) {
         if (metering) ctx.waitUntil(metering.record({ toolName: "extract_podcast_products", paymentMethod: meteringMethod(auth.method), processingTimeMs: Date.now() - start, success: false }));
-        const message = err instanceof Error ? err.message : String(err);
+        const message = err instanceof OpenAI.APIError
+          ? "upstream service temporarily unavailable"
+          : (err instanceof Error ? err.message : "internal error");
         return errorResult(`Extraction failed: ${message}`);
       }
     }
@@ -310,7 +315,10 @@ function createMcpServer(env: Env, request: Request, ctx: ExecutionContext): Mcp
       const episodeId = episode_id ?? randomUUID();
 
       const auth = await authorize(env, request, api_key);
-      if (!auth.authorized) return paymentRequiredResult(auth.reason ?? "Payment required");
+      if (!auth.authorized) {
+        if (metering) ctx.waitUntil(metering.record({ toolName: "_auth_failure", paymentMethod: "free_tier", processingTimeMs: 0, success: false }));
+        return paymentRequiredResult(auth.reason ?? "Payment required");
+      }
 
       try {
         let extraction = episode_id ? await cacheGet(env.PODCAST_CACHE, episodeId) : null;
@@ -341,7 +349,9 @@ function createMcpServer(env: Env, request: Request, ctx: ExecutionContext): Mcp
         return { content: [{ type: "text", text: JSON.stringify(analysis) }] };
       } catch (err) {
         if (metering) ctx.waitUntil(metering.record({ toolName: "analyze_episode_sponsors", paymentMethod: meteringMethod(auth.method), processingTimeMs: Date.now() - start, success: false }));
-        const message = err instanceof Error ? err.message : String(err);
+        const message = err instanceof OpenAI.APIError
+          ? "upstream service temporarily unavailable"
+          : (err instanceof Error ? err.message : "internal error");
         return errorResult(`Sponsor analysis failed: ${message}`);
       }
     }
@@ -377,7 +387,10 @@ function createMcpServer(env: Env, request: Request, ctx: ExecutionContext): Mcp
       const start = Date.now();
 
       const auth = await authorize(env, request, api_key);
-      if (!auth.authorized) return paymentRequiredResult(auth.reason ?? "Payment required");
+      if (!auth.authorized) {
+        if (metering) ctx.waitUntil(metering.record({ toolName: "_auth_failure", paymentMethod: "free_tier", processingTimeMs: 0, success: false }));
+        return paymentRequiredResult(auth.reason ?? "Payment required");
+      }
 
       try {
         const extractions: ExtractionResult[] = [];
@@ -415,7 +428,9 @@ function createMcpServer(env: Env, request: Request, ctx: ExecutionContext): Mcp
         return { content: [{ type: "text", text: JSON.stringify(report) }] };
       } catch (err) {
         if (metering) ctx.waitUntil(metering.record({ toolName: "track_product_trends", paymentMethod: meteringMethod(auth.method), processingTimeMs: Date.now() - start, success: false }));
-        const message = err instanceof Error ? err.message : String(err);
+        const message = err instanceof OpenAI.APIError
+          ? "upstream service temporarily unavailable"
+          : (err instanceof Error ? err.message : "internal error");
         return errorResult(`Trend analysis failed: ${message}`);
       }
     }

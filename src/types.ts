@@ -20,6 +20,13 @@ export type ProductCategory =
 
 export type RecommendationStrength = "strong" | "moderate" | "mention" | "negative";
 
+export interface AestheticTags {
+  warmth: "warm" | "cool" | "neutral";
+  density: "minimal" | "maximal" | "balanced";
+  origin: "natural" | "synthetic" | "mixed";
+  tradition: "traditional" | "contemporary" | "hybrid";
+}
+
 export type SponsorReadType =
   | "host_read"
   | "mid_roll"
@@ -42,6 +49,7 @@ export interface ProductMention {
   recommendation_strength: RecommendationStrength;
   affiliate_link: string | null;
   mention_count: number;
+  aestheticTags?: AestheticTags;
 }
 
 export interface SponsorSegment {
@@ -111,6 +119,10 @@ export interface OpenAIProductResponse {
     confidence: number;
     recommendation_strength: string;
     affiliate_link: string | null;
+    aesthetic_warmth?: string;
+    aesthetic_density?: string;
+    aesthetic_origin?: string;
+    aesthetic_tradition?: string;
   }>;
   sponsor_segments: Array<{
     sponsor_name: string;

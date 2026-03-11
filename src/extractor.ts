@@ -26,6 +26,7 @@ import type {
   SponsorAnalysis,
   TrendReport,
   ProductTrend,
+  AestheticTags,
 } from "./types.js";
 import { fetchTranscript } from "./transcript-fetcher.js";
 
@@ -76,6 +77,11 @@ const VALID_READ_TYPES = new Set<SponsorReadType>([
   "host_read", "mid_roll", "pre_roll", "post_roll",
 ]);
 
+const VALID_WARMTH = new Set(["warm", "cool", "neutral"]);
+const VALID_DENSITY = new Set(["minimal", "maximal", "balanced"]);
+const VALID_ORIGIN = new Set(["natural", "synthetic", "mixed"]);
+const VALID_TRADITION = new Set(["traditional", "contemporary", "hybrid"]);
+
 const STRENGTH_RANK: Record<RecommendationStrength, number> = {
   strong: 3, moderate: 2, mention: 1, negative: 0,
 };
@@ -103,6 +109,12 @@ Also identify sponsor segments:
 - read_type: "host_read", "mid_roll", "pre_roll", "post_roll", or "unknown"
 - estimated_read_through: 0.0-1.0 (0=skippable, 1=very compelling)
 - call_to_action: URL, promo code, or CTA text, or null
+
+For each product, also classify aesthetic character:
+- aesthetic_warmth: "warm" (cozy, earthy, comfort-focused), "cool" (clean, clinical, tech-forward), or "neutral"
+- aesthetic_density: "minimal" (simple, essential, pared back), "maximal" (rich, complex, indulgent), or "balanced"
+- aesthetic_origin: "natural" (organic, artisan, plant-based), "synthetic" (engineered, tech, processed), or "mixed"
+- aesthetic_tradition: "traditional" (heritage, classic, time-tested), "contemporary" (trending, innovative, modern), or "hybrid"
 
 Rules:
 - Only include products with confidence >= 0.4
@@ -158,7 +170,7 @@ export function normalizeProducts(
         existing.affiliate_link = p.affiliate_link;
       }
     } else {
-      productMap.set(key, {
+      const entry: ProductMention = {
         name,
         category,
         mention_context: (p.mention_context ?? "").slice(0, 100),
@@ -167,11 +179,36 @@ export function normalizeProducts(
         recommendation_strength: strength,
         affiliate_link: p.affiliate_link ?? null,
         mention_count: 1,
-      });
+      };
+
+      const tags = parseAestheticTags(p);
+      if (tags) entry.aestheticTags = tags;
+
+      productMap.set(key, entry);
     }
   }
 
   return [...productMap.values()].sort((a, b) => b.confidence - a.confidence);
+}
+
+/**
+ * Parse and validate aesthetic tag fields from a raw OpenAI product entry.
+ * Returns undefined if no valid tags present.
+ */
+function parseAestheticTags(p: OpenAIProductResponse["products"][number]): AestheticTags | undefined {
+  const warmth = VALID_WARMTH.has(p.aesthetic_warmth ?? "") ? p.aesthetic_warmth as AestheticTags["warmth"] : null;
+  const density = VALID_DENSITY.has(p.aesthetic_density ?? "") ? p.aesthetic_density as AestheticTags["density"] : null;
+  const origin = VALID_ORIGIN.has(p.aesthetic_origin ?? "") ? p.aesthetic_origin as AestheticTags["origin"] : null;
+  const tradition = VALID_TRADITION.has(p.aesthetic_tradition ?? "") ? p.aesthetic_tradition as AestheticTags["tradition"] : null;
+
+  if (!warmth && !density && !origin && !tradition) return undefined;
+
+  return {
+    warmth: warmth ?? "neutral",
+    density: density ?? "balanced",
+    origin: origin ?? "mixed",
+    tradition: tradition ?? "hybrid",
+  };
 }
 
 /**

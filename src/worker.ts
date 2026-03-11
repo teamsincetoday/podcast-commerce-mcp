@@ -33,7 +33,7 @@ import type { ExtractionResult, AuthResult } from "./types.js";
 
 const SERVER_NAME = "podcast-commerce-intelligence";
 const SERVER_VERSION = "0.1.0";
-const TOOL_PRICE_USD = 0.001;
+const TOOL_PRICE_USD = 0.01;
 const TOOL_NAMES = ["extract_podcast_products", "analyze_episode_sponsors", "track_product_trends"] as const;
 
 export const FREE_TIER_DAILY_LIMIT = 200;
@@ -468,7 +468,7 @@ MCP server for podcast commerce intelligence. Extracts affiliate products, spons
 - Output: products array [{name, category, mention_context, speaker, confidence, recommendation_strength, affiliate_link, mention_count}], sponsor_segments array, _meta
 - Typical output: 300-600 tokens
 - Latency: 2-4 seconds (OpenAI GPT-4o-mini)
-- Price: free for first 200 calls/day, $0.001/call with API key
+- Price: free for first 200 calls/day, $0.01/call with API key
 
 ### analyze_episode_sponsors
 - Input: same as extract_podcast_products; reuses cache if episode_id matches prior extraction

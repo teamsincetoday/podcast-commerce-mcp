@@ -1,0 +1,164 @@
+{
+  "timestamp": "2026-03-07T21:50:20.047Z",
+  "mode": "live",
+  "results": [
+    {
+      "caseId": "health-podcast-supplements",
+      "caseName": "Health Podcast — Supplement & Equipment Focus",
+      "timestamp": "2026-03-07T21:50:04.335Z",
+      "mode": "live",
+      "scores": [
+        {
+          "dimension": "accuracy",
+          "score": 100,
+          "target": 80,
+          "weight": 0.4,
+          "details": "F1=100 (P=100, R=100). Required: 5/5. Found: 8, Expected: 8.",
+          "passed": true
+        },
+        {
+          "dimension": "value",
+          "score": 100,
+          "target": 70,
+          "weight": 0.35,
+          "details": "entities=8 ✓, conf=0.76 ✓, strong_rec ✓, sponsors=1 ✓",
+          "passed": true
+        },
+        {
+          "dimension": "cost",
+          "score": 100,
+          "target": 80,
+          "weight": 0.25,
+          "details": "cost=$0.00044 (budget=$0.0100) ✓",
+          "passed": true
+        }
+      ],
+      "overallScore": 100,
+      "passed": true,
+      "durationMs": 8953,
+      "metrics": {
+        "entity_count": 8,
+        "sponsor_count": 1,
+        "avg_confidence": 0.76,
+        "latency_ms": 8953,
+        "cost_usd": 0.0004353,
+        "affiliate_matches": 2,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      }
+    },
+    {
+      "caseId": "tech-podcast-saas",
+      "caseName": "Tech Podcast — SaaS Tool Recommendations",
+      "timestamp": "2026-03-07T21:50:11.970Z",
+      "mode": "live",
+      "scores": [
+        {
+          "dimension": "accuracy",
+          "score": 91,
+          "target": 80,
+          "weight": 0.4,
+          "details": "F1=86 (P=100, R=75). Required: 6/6. Found: 6, Expected: 8.",
+          "passed": true
+        },
+        {
+          "dimension": "value",
+          "score": 100,
+          "target": 70,
+          "weight": 0.35,
+          "details": "entities=6 ✓, conf=0.83 ✓, strong_rec ✓, sponsors=n/a ✓",
+          "passed": true
+        },
+        {
+          "dimension": "cost",
+          "score": 100,
+          "target": 80,
+          "weight": 0.25,
+          "details": "cost=$0.00032 (budget=$0.0100) ✓",
+          "passed": true
+        }
+      ],
+      "overallScore": 96,
+      "passed": true,
+      "durationMs": 7634,
+      "metrics": {
+        "entity_count": 6,
+        "sponsor_count": 0,
+        "avg_confidence": 0.83,
+        "latency_ms": 7634,
+        "cost_usd": 0.00032264999999999996,
+        "affiliate_matches": 0,
+        "precision": 1,
+        "recall": 0.75,
+        "f1": 0.86
+      }
+    },
+    {
+      "caseId": "sponsored-business-podcast",
+      "caseName": "Business Podcast — Dual Sponsors + Organic",
+      "timestamp": "2026-03-07T21:50:20.044Z",
+      "mode": "live",
+      "scores": [
+        {
+          "dimension": "accuracy",
+          "score": 100,
+          "target": 80,
+          "weight": 0.4,
+          "details": "F1=100 (P=100, R=100). Required: 5/5. Found: 5, Expected: 5.",
+          "passed": true
+        },
+        {
+          "dimension": "value",
+          "score": 100,
+          "target": 70,
+          "weight": 0.35,
+          "details": "entities=5 ✓, conf=0.78 ✓, strong_rec ✓, sponsors=2 ✓",
+          "passed": true
+        },
+        {
+          "dimension": "cost",
+          "score": 100,
+          "target": 80,
+          "weight": 0.25,
+          "details": "cost=$0.00034 (budget=$0.0100) ✓",
+          "passed": true
+        }
+      ],
+      "overallScore": 100,
+      "passed": true,
+      "durationMs": 8072,
+      "metrics": {
+        "entity_count": 5,
+        "sponsor_count": 2,
+        "avg_confidence": 0.78,
+        "latency_ms": 8072,
+        "cost_usd": 0.0003384,
+        "affiliate_matches": 2,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      }
+    }
+  ],
+  "summary": {
+    "totalCases": 3,
+    "passed": 3,
+    "failed": 0,
+    "overallScore": 99,
+    "dimensionAverages": {
+      "accuracy": 97,
+      "value": 100,
+      "cost": 100
+    }
+  },
+  "aggregatedMetrics": {
+    "avg_entity_count": 6,
+    "avg_latency_ms": 8220,
+    "avg_cost_usd": 0.00036544999999999997,
+    "avg_f1": 0.95,
+    "avg_confidence": 0.79,
+    "total_affiliate_matches": 4
+  },
+  "priorities": []
+}

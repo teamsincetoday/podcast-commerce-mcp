@@ -1,0 +1,195 @@
+{
+  "timestamp": "2026-03-07T21:49:45.618Z",
+  "mode": "fixture",
+  "results": [
+    {
+      "caseId": "health-podcast-supplements",
+      "caseName": "Health Podcast — Supplement & Equipment Focus",
+      "timestamp": "2026-03-07T21:49:45.612Z",
+      "mode": "fixture",
+      "scores": [
+        {
+          "dimension": "accuracy",
+          "score": 0,
+          "target": 80,
+          "weight": 0.4,
+          "details": "F1=0 (P=0, R=0). Required: 0/5. Found: 8, Expected: 8.",
+          "passed": false
+        },
+        {
+          "dimension": "value",
+          "score": 62,
+          "target": 70,
+          "weight": 0.35,
+          "details": "entities=8 ✓, conf=0.80 ✓, moderate_rec (no strong), sponsors=0/1 required",
+          "passed": false
+        },
+        {
+          "dimension": "cost",
+          "score": 100,
+          "target": 80,
+          "weight": 0.25,
+          "details": "cost=$0.00100 (budget=$0.0100) ✓",
+          "passed": true
+        }
+      ],
+      "overallScore": 47,
+      "passed": false,
+      "durationMs": 0,
+      "metrics": {
+        "entity_count": 8,
+        "sponsor_count": 0,
+        "avg_confidence": 0.8,
+        "latency_ms": 0,
+        "cost_usd": 0.001,
+        "affiliate_matches": 0,
+        "precision": 0,
+        "recall": 0,
+        "f1": 0
+      }
+    },
+    {
+      "caseId": "tech-podcast-saas",
+      "caseName": "Tech Podcast — SaaS Tool Recommendations",
+      "timestamp": "2026-03-07T21:49:45.614Z",
+      "mode": "fixture",
+      "scores": [
+        {
+          "dimension": "accuracy",
+          "score": 0,
+          "target": 80,
+          "weight": 0.4,
+          "details": "F1=0 (P=0, R=0). Required: 0/6. Found: 8, Expected: 8.",
+          "passed": false
+        },
+        {
+          "dimension": "value",
+          "score": 87,
+          "target": 70,
+          "weight": 0.35,
+          "details": "entities=8 ✓, conf=0.80 ✓, moderate_rec (no strong), sponsors=n/a ✓",
+          "passed": true
+        },
+        {
+          "dimension": "cost",
+          "score": 100,
+          "target": 80,
+          "weight": 0.25,
+          "details": "cost=$0.00100 (budget=$0.0100) ✓",
+          "passed": true
+        }
+      ],
+      "overallScore": 55,
+      "passed": false,
+      "durationMs": 0,
+      "metrics": {
+        "entity_count": 8,
+        "sponsor_count": 0,
+        "avg_confidence": 0.8,
+        "latency_ms": 0,
+        "cost_usd": 0.001,
+        "affiliate_matches": 0,
+        "precision": 0,
+        "recall": 0,
+        "f1": 0
+      }
+    },
+    {
+      "caseId": "sponsored-business-podcast",
+      "caseName": "Business Podcast — Dual Sponsors + Organic",
+      "timestamp": "2026-03-07T21:49:45.615Z",
+      "mode": "fixture",
+      "scores": [
+        {
+          "dimension": "accuracy",
+          "score": 0,
+          "target": 80,
+          "weight": 0.4,
+          "details": "F1=0 (P=0, R=0). Required: 0/5. Found: 5, Expected: 5.",
+          "passed": false
+        },
+        {
+          "dimension": "value",
+          "score": 62,
+          "target": 70,
+          "weight": 0.35,
+          "details": "entities=5 ✓, conf=0.80 ✓, moderate_rec (no strong), sponsors=0/2 required",
+          "passed": false
+        },
+        {
+          "dimension": "cost",
+          "score": 100,
+          "target": 80,
+          "weight": 0.25,
+          "details": "cost=$0.00100 (budget=$0.0100) ✓",
+          "passed": true
+        }
+      ],
+      "overallScore": 47,
+      "passed": false,
+      "durationMs": 0,
+      "metrics": {
+        "entity_count": 5,
+        "sponsor_count": 0,
+        "avg_confidence": 0.8,
+        "latency_ms": 0,
+        "cost_usd": 0.001,
+        "affiliate_matches": 0,
+        "precision": 0,
+        "recall": 0,
+        "f1": 0
+      }
+    }
+  ],
+  "summary": {
+    "totalCases": 3,
+    "passed": 0,
+    "failed": 3,
+    "overallScore": 50,
+    "dimensionAverages": {
+      "accuracy": 0,
+      "value": 70,
+      "cost": 100
+    }
+  },
+  "aggregatedMetrics": {
+    "avg_entity_count": 7,
+    "avg_latency_ms": 0,
+    "avg_cost_usd": 0.001,
+    "avg_f1": 0,
+    "avg_confidence": 0.8,
+    "total_affiliate_matches": 0
+  },
+  "priorities": [
+    {
+      "dimension": "accuracy (Health Podcast — Supplement & Equipment Focus)",
+      "gap": 80,
+      "weightedGap": 32,
+      "suggestion": "Improve extraction prompt — add examples of products to include/exclude"
+    },
+    {
+      "dimension": "accuracy (Tech Podcast — SaaS Tool Recommendations)",
+      "gap": 80,
+      "weightedGap": 32,
+      "suggestion": "Improve extraction prompt — add examples of products to include/exclude"
+    },
+    {
+      "dimension": "accuracy (Business Podcast — Dual Sponsors + Organic)",
+      "gap": 80,
+      "weightedGap": 32,
+      "suggestion": "Improve extraction prompt — add examples of products to include/exclude"
+    },
+    {
+      "dimension": "value (Health Podcast — Supplement & Equipment Focus)",
+      "gap": 8,
+      "weightedGap": 2.8,
+      "suggestion": "Increase minimum entity threshold in extraction or improve confidence calibration"
+    },
+    {
+      "dimension": "value (Business Podcast — Dual Sponsors + Organic)",
+      "gap": 8,
+      "weightedGap": 2.8,
+      "suggestion": "Increase minimum entity threshold in extraction or improve confidence calibration"
+    }
+  ]
+}

@@ -483,6 +483,65 @@ describe("compareProductsAcrossShows", () => {
     expect(report.show_ids).toContain("garden-show-1");
     expect(report.show_ids).toContain("garden-show-2");
   });
+
+  it("brands[]: aggregates different Espoma products across shows into one brand entry", () => {
+    // Mirrors the real gardening testbed: Espoma products have different names but same brand.
+    const extractions = [
+      makeExtraction("garden-answer", [
+        { name: "Espoma Garden-Tone", confidence: 0.9 },
+        { name: "Espoma Rose-Tone", confidence: 0.7 },
+      ]),
+      makeExtraction("joe-gardener", [
+        { name: "Espoma Greensand", confidence: 0.8 },
+        { name: "Espoma Bio-tone Starter Plus", confidence: 0.7 },
+      ]),
+    ];
+    const report = compareProductsAcrossShows({ extractions, minConfidence: 0.6 });
+    // products[] should be empty — no identical product names cross shows
+    expect(report.products).toHaveLength(0);
+    // brands[] should surface Espoma with show_count=2
+    const espoma = report.brands.find((b) => b.brand === "Espoma");
+    expect(espoma).toBeDefined();
+    expect(espoma?.show_count).toBe(2);
+    expect(espoma?.product_count).toBe(4);
+    expect(espoma?.shows).toContain("garden-answer");
+    expect(espoma?.shows).toContain("joe-gardener");
+  });
+
+  it("brands[]: excludes single-show brands", () => {
+    const extractions = [
+      makeExtraction("show-1", [
+        { name: "Fiskars Snips", confidence: 0.9 },
+        { name: "Dramm Wand", confidence: 0.88 },
+      ]),
+      makeExtraction("show-2", [
+        { name: "Fiskars Snips", confidence: 0.87 },
+      ]),
+    ];
+    const report = compareProductsAcrossShows({ extractions, minConfidence: 0.75 });
+    // Fiskars appears in 2 shows — should be in brands
+    expect(report.brands.find((b) => b.brand === "Fiskars")).toBeDefined();
+    // Dramm only in show-1 — should NOT be in brands
+    expect(report.brands.find((b) => b.brand === "Dramm")).toBeUndefined();
+  });
+
+  it("brands[]: sorts by show_count × product_count descending", () => {
+    const extractions = [
+      makeExtraction("show-1", [
+        { name: "Espoma Tone Plus", confidence: 0.9 },
+        { name: "Espoma Greensand", confidence: 0.88 },
+        { name: "Fiskars Snips", confidence: 0.87 },
+      ]),
+      makeExtraction("show-2", [
+        { name: "Espoma Bio-tone", confidence: 0.9 },
+        { name: "Fiskars Pruner", confidence: 0.85 },
+      ]),
+    ];
+    const report = compareProductsAcrossShows({ extractions, minConfidence: 0.75 });
+    // Espoma: show_count=2, product_count=3 → score=6. Fiskars: show_count=2, product_count=2 → score=4.
+    expect(report.brands[0]?.brand).toBe("Espoma");
+    expect(report.brands[1]?.brand).toBe("Fiskars");
+  });
 });
 
 // ============================================================================

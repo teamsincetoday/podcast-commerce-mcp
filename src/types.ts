@@ -156,8 +156,19 @@ export interface CrossShowProduct {
   recommendation_consensus: "unanimous" | "majority" | "mixed" | "rare";
 }
 
+/** Brand-level rollup: groups all products from the same brand across shows. */
+export interface CrossShowBrand {
+  brand: string;
+  product_count: number;
+  show_count: number;
+  shows: string[];
+  avg_confidence: number;
+  products: string[];
+}
+
 export interface CrossShowReport {
   products: CrossShowProduct[];
+  brands: CrossShowBrand[];
   show_ids: string[];
   _meta?: Record<string, unknown>;
 }

@@ -29,6 +29,7 @@ import type {
   AestheticTags,
   CrossShowMention,
   CrossShowProduct,
+  CrossShowBrand,
   CrossShowReport,
 } from "./types.js";
 import { fetchTranscript } from "./transcript-fetcher.js";
@@ -625,5 +626,50 @@ export function compareProductsAcrossShows(
   // Rank by avg_confidence × show_count descending
   products.sort((a, b) => b.avg_confidence * b.show_count - a.avg_confidence * a.show_count);
 
-  return { products, show_ids };
+  // Brand-level rollup: aggregate all confidence-passing products by brand across shows.
+  // Surfaces brand presence (e.g. "Espoma in 2 shows, 3 products") even when individual
+  // product names don't match across shows.
+  const brandMap = new Map<
+    string,
+    { shows: Set<string>; products: string[]; confidences: number[] }
+  >();
+
+  for (const extraction of extractions) {
+    const showId = extraction.episode_id;
+    for (const product of extraction.products) {
+      if (product.confidence < minConfidence) continue;
+      if (category && product.category !== category) continue;
+      const brand = extractBrand(product.name);
+      if (!brand) continue;
+      const existing = brandMap.get(brand);
+      if (existing) {
+        existing.shows.add(showId);
+        if (!existing.products.includes(product.name)) existing.products.push(product.name);
+        existing.confidences.push(product.confidence);
+      } else {
+        brandMap.set(brand, {
+          shows: new Set([showId]),
+          products: [product.name],
+          confidences: [product.confidence],
+        });
+      }
+    }
+  }
+
+  const brands: CrossShowBrand[] = [];
+  for (const [brand, data] of brandMap.entries()) {
+    if (data.shows.size < 2) continue; // Only multi-show brands
+    const avg_conf = data.confidences.reduce((s, c) => s + c, 0) / data.confidences.length;
+    brands.push({
+      brand,
+      product_count: data.products.length,
+      show_count: data.shows.size,
+      shows: Array.from(data.shows),
+      avg_confidence: Math.round(avg_conf * 1000) / 1000,
+      products: data.products,
+    });
+  }
+  brands.sort((a, b) => b.show_count * b.product_count - a.show_count * a.product_count);
+
+  return { products, brands, show_ids };
 }

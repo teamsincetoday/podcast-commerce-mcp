@@ -27,6 +27,9 @@ import type {
   TrendReport,
   ProductTrend,
   AestheticTags,
+  CrossShowMention,
+  CrossShowProduct,
+  CrossShowReport,
 } from "./types.js";
 import { fetchTranscript } from "./transcript-fetcher.js";
 
@@ -481,4 +484,146 @@ export function computeTrends(extractions: ExtractionResult[]): TrendReport {
     trends,
     episode_ids,
   };
+}
+
+// ============================================================================
+// CROSS-SHOW PRODUCT COMPARISON
+// ============================================================================
+
+export interface CompareProductsAcrossShowsParams {
+  extractions: ExtractionResult[];
+  category?: string | null;
+  minConfidence?: number;   // default 0.85
+  minShowCount?: number;    // default 2
+}
+
+/**
+ * Normalize a product name for entity resolution.
+ * Lowercase, trim, collapse whitespace, strip non-word characters.
+ */
+function normalizeProductName(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s]/g, "")
+    .replace(/\s+/g, " ");
+}
+
+/**
+ * Extract brand from a product name using a simple first-word heuristic.
+ * Returns null for single-word names.
+ */
+function extractBrand(productName: string): string | null {
+  const words = productName.trim().split(/\s+/);
+  if (words.length <= 1) return null;
+  return words[0] ?? null;
+}
+
+/**
+ * Compute recommendation consensus across a set of per-show mentions.
+ * "unanimous" — every show recommends (strong/moderate)
+ * "majority"  — >50% recommend
+ * "mixed"     — some recommend, some don't
+ * "rare"      — no show recommends
+ */
+function computeConsensus(shows: CrossShowMention[]): CrossShowProduct["recommendation_consensus"] {
+  const total = shows.length;
+  if (total === 0) return "rare";
+  const recommends = shows.filter(
+    (s) => s.recommendation_strength === "strong" || s.recommendation_strength === "moderate",
+  ).length;
+  if (recommends === total) return "unanimous";
+  if (recommends > total / 2) return "majority";
+  if (recommends > 0) return "mixed";
+  return "rare";
+}
+
+/**
+ * Compare product mentions across multiple shows using cached extractions.
+ * Pure local computation — no OpenAI calls.
+ * Entity resolution: normalized name equality (case-insensitive, punctuation-stripped).
+ * Ranking: avg_confidence × show_count descending.
+ */
+export function compareProductsAcrossShows(
+  params: CompareProductsAcrossShowsParams,
+): CrossShowReport {
+  const {
+    extractions,
+    category,
+    minConfidence = 0.85,
+    minShowCount = 2,
+  } = params;
+
+  const show_ids = extractions.map((e) => e.episode_id);
+
+  // Map: normalized name → accumulated data
+  const productMap = new Map<
+    string,
+    {
+      originalName: string;
+      category: ProductCategory;
+      mentions: Array<{ showId: string; product: ProductMention }>;
+    }
+  >();
+
+  for (const extraction of extractions) {
+    const showId = extraction.episode_id;
+    for (const product of extraction.products) {
+      if (product.confidence < minConfidence) continue;
+      if (category && product.category !== category) continue;
+
+      const key = normalizeProductName(product.name);
+      if (!key) continue;
+
+      const existing = productMap.get(key);
+      if (existing) {
+        // One mention per show — keep the highest-confidence one
+        const showIdx = existing.mentions.findIndex((m) => m.showId === showId);
+        if (showIdx === -1) {
+          existing.mentions.push({ showId, product });
+        } else if (product.confidence > (existing.mentions[showIdx]?.product.confidence ?? 0)) {
+          existing.mentions[showIdx] = { showId, product };
+        }
+      } else {
+        productMap.set(key, {
+          originalName: product.name,
+          category: product.category,
+          mentions: [{ showId, product }],
+        });
+      }
+    }
+  }
+
+  const products: CrossShowProduct[] = [];
+
+  for (const [, data] of productMap.entries()) {
+    if (data.mentions.length < minShowCount) continue;
+
+    const shows: CrossShowMention[] = data.mentions.map(({ showId, product }) => ({
+      show_id: showId,
+      episode_id: showId,
+      mention_context: product.mention_context,
+      host: product.speaker,
+      confidence: product.confidence,
+      recommendation_strength: product.recommendation_strength,
+    }));
+
+    const avg_confidence =
+      shows.reduce((sum, s) => sum + s.confidence, 0) / shows.length;
+
+    products.push({
+      product_name: data.originalName,
+      brand: extractBrand(data.originalName),
+      category: data.category,
+      shows,
+      show_count: shows.length,
+      avg_confidence: Math.round(avg_confidence * 1000) / 1000,
+      recommendation_consensus: computeConsensus(shows),
+    });
+  }
+
+  // Rank by avg_confidence × show_count descending
+  products.sort((a, b) => b.avg_confidence * b.show_count - a.avg_confidence * a.show_count);
+
+  return { products, show_ids };
 }

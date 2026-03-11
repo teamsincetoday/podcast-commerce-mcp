@@ -20,6 +20,7 @@ import {
   extractProducts,
   buildSponsorAnalysis,
   computeTrends,
+  compareProductsAcrossShows,
 } from "./extractor.js";
 import type { ExtractionResult, AuthResult } from "./types.js";
 
@@ -421,6 +422,106 @@ export function createServer(): McpServer {
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         return errorResult(`Trend analysis failed: ${message}`);
+      }
+    }
+  );
+
+  // --------------------------------------------------------------------------
+  // TOOL 4: compare_products_across_shows
+  // --------------------------------------------------------------------------
+
+  server.tool(
+    "compare_products_across_shows",
+    "Compare and rank product mentions across multiple podcast shows using cached extractions — no re-run. Collapses a 3-call manual join into 1 tool call. Performs entity resolution to identify the same product mentioned across shows. Returns ranked cross-show product list with per-show context, average confidence, and recommendation consensus. Use for multi-show affiliate research, 'best of' page generation, and cross-show brand ranking. Supports physical_goods, saas, supplement, and all other categories. Requires prior extract_podcast_products calls for each show_id.",
+    {
+      show_ids: z
+        .array(z.string().max(ID_MAX_CHARS))
+        .min(1)
+        .max(EPISODE_IDS_ARRAY_MAX)
+        .describe(
+          "List of show/episode IDs to compare. Each must have a prior extract_podcast_products cache entry."
+        ),
+      category: z
+        .string()
+        .max(CATEGORY_FILTER_ITEM_MAX)
+        .optional()
+        .describe(
+          "Optional single-category filter: physical_goods, saas, course, service, supplement, media, event, other"
+        ),
+      min_confidence: z
+        .number()
+        .min(0)
+        .max(1)
+        .optional()
+        .describe("Minimum confidence threshold (default 0.85). Lower to include more products."),
+      min_show_count: z
+        .number()
+        .int()
+        .min(1)
+        .max(20)
+        .optional()
+        .describe(
+          "Minimum number of shows a product must appear in to be included (default 2). Set to 1 for single-show results."
+        ),
+      api_key: z
+        .string()
+        .max(API_KEY_MAX_CHARS)
+        .optional()
+        .describe("Optional API key for paid access beyond the free tier"),
+    },
+    async ({ show_ids, category, min_confidence, min_show_count, api_key }) => {
+      const start = Date.now();
+      const agentId = getAgentId();
+
+      const auth = authorize(agentId, api_key);
+      if (!auth.authorized) {
+        return paymentRequiredResult(auth.reason ?? "Payment required");
+      }
+
+      try {
+        const cache = getCache();
+        const extractions: ExtractionResult[] = [];
+        const missing: string[] = [];
+
+        for (const id of show_ids) {
+          const cached = cache.get(id);
+          if (cached) extractions.push(cached);
+          else missing.push(id);
+        }
+
+        if (missing.length > 0) {
+          return errorResult(
+            `Missing cached extractions for shows: ${missing.join(", ")}. ` +
+              `Run extract_podcast_products first for each show_id.`
+          );
+        }
+
+        const report = compareProductsAcrossShows({
+          extractions,
+          category,
+          minConfidence: min_confidence,
+          minShowCount: min_show_count,
+        });
+        report._meta = {
+          processing_time_ms: Date.now() - start,
+          ai_cost_usd: 0,
+          cache_hit: true,
+        };
+
+        cache.recordUsage({
+          agentId,
+          toolName: "compare_products_across_shows",
+          paymentMethod: auth.method ?? "disabled",
+          amountUsd: 0,
+          success: true,
+        });
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(report) }],
+        };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return errorResult(`Cross-show comparison failed: ${message}`);
       }
     }
   );

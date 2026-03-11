@@ -134,6 +134,35 @@ export interface OpenAIProductResponse {
 }
 
 // ============================================================================
+// CROSS-SHOW COMPARISON
+// ============================================================================
+
+export interface CrossShowMention {
+  show_id: string;
+  episode_id: string;
+  mention_context: string;
+  host: string | null;
+  confidence: number;
+  recommendation_strength: RecommendationStrength;
+}
+
+export interface CrossShowProduct {
+  product_name: string;
+  brand: string | null;
+  category: ProductCategory;
+  shows: CrossShowMention[];
+  show_count: number;
+  avg_confidence: number;
+  recommendation_consensus: "unanimous" | "majority" | "mixed" | "rare";
+}
+
+export interface CrossShowReport {
+  products: CrossShowProduct[];
+  show_ids: string[];
+  _meta?: Record<string, unknown>;
+}
+
+// ============================================================================
 // AUTH
 // ============================================================================
 

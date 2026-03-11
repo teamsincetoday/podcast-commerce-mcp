@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { normalizeProducts, normalizeSponsorSegments, computeTrends } from "../src/extractor.js";
+import { normalizeProducts, normalizeSponsorSegments, computeTrends, compareProductsAcrossShows } from "../src/extractor.js";
 import type { ExtractionResult, OpenAIProductResponse } from "../src/types.js";
 
 // ============================================================================
@@ -303,6 +303,185 @@ describe("computeTrends", () => {
     expect(report.episode_ids).toContain("ep-alpha");
     expect(report.episode_ids).toContain("ep-beta");
     expect(report.episode_ids).toHaveLength(2);
+  });
+});
+
+// ============================================================================
+// compareProductsAcrossShows
+// ============================================================================
+
+describe("compareProductsAcrossShows", () => {
+  const makeExtraction = (
+    episodeId: string,
+    products: Array<{
+      name: string;
+      category?: string;
+      confidence?: number;
+      recommendation_strength?: string;
+      speaker?: string | null;
+    }>
+  ): ExtractionResult => ({
+    episode_id: episodeId,
+    products: products.map((p) => ({
+      name: p.name,
+      category: (p.category ?? "physical_goods") as import("../src/types.js").ProductCategory,
+      mention_context: `context for ${p.name}`,
+      speaker: p.speaker ?? null,
+      confidence: p.confidence ?? 0.9,
+      recommendation_strength: (p.recommendation_strength ?? "strong") as import("../src/types.js").RecommendationStrength,
+      affiliate_link: null,
+      mention_count: 1,
+    })),
+    sponsor_segments: [],
+    _meta: { processing_time_ms: 100, ai_cost_usd: 0.001, cache_hit: false },
+  });
+
+  it("returns empty products for empty extractions", () => {
+    const report = compareProductsAcrossShows({ extractions: [] });
+    expect(report.products).toHaveLength(0);
+    expect(report.show_ids).toHaveLength(0);
+  });
+
+  it("filters out products below min_confidence", () => {
+    const extractions = [
+      makeExtraction("show-1", [{ name: "Fiskars Hoe", confidence: 0.6 }]),
+      makeExtraction("show-2", [{ name: "Fiskars Hoe", confidence: 0.6 }]),
+    ];
+    const report = compareProductsAcrossShows({ extractions, minConfidence: 0.85 });
+    expect(report.products).toHaveLength(0);
+  });
+
+  it("filters by min_show_count — product in only 1 show excluded at default 2", () => {
+    const extractions = [
+      makeExtraction("show-1", [{ name: "Corona Long Handle", confidence: 0.92 }]),
+      makeExtraction("show-2", [{ name: "Unrelated Product", confidence: 0.95 }]),
+    ];
+    const report = compareProductsAcrossShows({ extractions });
+    expect(report.products).toHaveLength(0);
+  });
+
+  it("includes products appearing in required number of shows", () => {
+    const extractions = [
+      makeExtraction("show-1", [{ name: "Fiskars Pruner", confidence: 0.91 }]),
+      makeExtraction("show-2", [{ name: "Fiskars Pruner", confidence: 0.88 }]),
+    ];
+    const report = compareProductsAcrossShows({ extractions });
+    expect(report.products).toHaveLength(1);
+    expect(report.products[0]?.product_name).toBe("Fiskars Pruner");
+    expect(report.products[0]?.show_count).toBe(2);
+  });
+
+  it("min_show_count=1 includes single-show products", () => {
+    const extractions = [
+      makeExtraction("show-1", [{ name: "Unique Tool", confidence: 0.9 }]),
+    ];
+    const report = compareProductsAcrossShows({ extractions, minShowCount: 1 });
+    expect(report.products).toHaveLength(1);
+    expect(report.products[0]?.show_count).toBe(1);
+  });
+
+  it("resolves same product name case-insensitively across shows", () => {
+    const extractions = [
+      makeExtraction("show-1", [{ name: "Hori Hori Knife", confidence: 0.9 }]),
+      makeExtraction("show-2", [{ name: "hori hori knife", confidence: 0.93 }]),
+    ];
+    const report = compareProductsAcrossShows({ extractions });
+    expect(report.products).toHaveLength(1);
+    expect(report.products[0]?.show_count).toBe(2);
+  });
+
+  it("does NOT merge differently-named products from the same brand", () => {
+    const extractions = [
+      makeExtraction("show-1", [
+        { name: "Fiskars Pruner", confidence: 0.9 },
+        { name: "Fiskars Hoe", confidence: 0.9 },
+      ]),
+      makeExtraction("show-2", [
+        { name: "Fiskars Pruner", confidence: 0.88 },
+        { name: "Fiskars Hoe", confidence: 0.87 },
+      ]),
+    ];
+    const report = compareProductsAcrossShows({ extractions });
+    // Both products appear in both shows — should be 2 separate entries
+    expect(report.products).toHaveLength(2);
+  });
+
+  it("filters by category", () => {
+    const extractions = [
+      makeExtraction("show-1", [
+        { name: "Fiskars Pruner", category: "physical_goods", confidence: 0.91 },
+        { name: "Garden Planner App", category: "saas", confidence: 0.91 },
+      ]),
+      makeExtraction("show-2", [
+        { name: "Fiskars Pruner", category: "physical_goods", confidence: 0.88 },
+        { name: "Garden Planner App", category: "saas", confidence: 0.88 },
+      ]),
+    ];
+    const report = compareProductsAcrossShows({ extractions, category: "physical_goods" });
+    expect(report.products).toHaveLength(1);
+    expect(report.products[0]?.category).toBe("physical_goods");
+  });
+
+  it("computes avg_confidence correctly", () => {
+    const extractions = [
+      makeExtraction("show-1", [{ name: "Barebones Tool", confidence: 0.9 }]),
+      makeExtraction("show-2", [{ name: "Barebones Tool", confidence: 0.8 }]),
+    ];
+    // minConfidence 0.75 so both shows pass the threshold; avg = (0.9 + 0.8) / 2 = 0.85
+    const report = compareProductsAcrossShows({ extractions, minConfidence: 0.75 });
+    expect(report.products[0]?.avg_confidence).toBeCloseTo(0.85, 2);
+  });
+
+  it("computes recommendation_consensus: unanimous when all shows recommend", () => {
+    const extractions = [
+      makeExtraction("show-1", [{ name: "Dramm Wand", confidence: 0.9, recommendation_strength: "strong" }]),
+      makeExtraction("show-2", [{ name: "Dramm Wand", confidence: 0.88, recommendation_strength: "moderate" }]),
+    ];
+    const report = compareProductsAcrossShows({ extractions });
+    expect(report.products[0]?.recommendation_consensus).toBe("unanimous");
+  });
+
+  it("computes recommendation_consensus: rare when no show recommends", () => {
+    const extractions = [
+      makeExtraction("show-1", [{ name: "Meh Tool", confidence: 0.9, recommendation_strength: "mention" }]),
+      makeExtraction("show-2", [{ name: "Meh Tool", confidence: 0.88, recommendation_strength: "mention" }]),
+    ];
+    const report = compareProductsAcrossShows({ extractions });
+    expect(report.products[0]?.recommendation_consensus).toBe("rare");
+  });
+
+  it("ranks by avg_confidence × show_count descending", () => {
+    const extractions = [
+      makeExtraction("show-1", [
+        { name: "High Value Tool", confidence: 0.95 },
+        { name: "Low Value Tool", confidence: 0.87 },
+      ]),
+      makeExtraction("show-2", [
+        { name: "High Value Tool", confidence: 0.93 },
+        { name: "Low Value Tool", confidence: 0.86 },
+      ]),
+    ];
+    const report = compareProductsAcrossShows({ extractions });
+    expect(report.products[0]?.product_name).toBe("High Value Tool");
+  });
+
+  it("extracts brand from multi-word product name", () => {
+    const extractions = [
+      makeExtraction("show-1", [{ name: "Fiskars Snips", confidence: 0.92 }]),
+      makeExtraction("show-2", [{ name: "Fiskars Snips", confidence: 0.9 }]),
+    ];
+    const report = compareProductsAcrossShows({ extractions });
+    expect(report.products[0]?.brand).toBe("Fiskars");
+  });
+
+  it("returns correct show_ids in report", () => {
+    const extractions = [
+      makeExtraction("garden-show-1", [{ name: "Hori Knife", confidence: 0.9 }]),
+      makeExtraction("garden-show-2", [{ name: "Hori Knife", confidence: 0.91 }]),
+    ];
+    const report = compareProductsAcrossShows({ extractions });
+    expect(report.show_ids).toContain("garden-show-1");
+    expect(report.show_ids).toContain("garden-show-2");
   });
 });
 

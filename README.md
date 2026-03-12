@@ -24,7 +24,21 @@ cp .env.example .env
 npx podcast-commerce-mcp
 ```
 
-## MCP Client Config
+## Connect in Claude Code — No Install Required
+
+Add to your `claude_desktop_config.json` or use `/add-mcp` in Claude Code. Free tier: 200 calls/day, no API key needed:
+
+```json
+{
+  "mcpServers": {
+    "podcast-commerce": {
+      "url": "https://podcast-commerce-mcp.sincetoday.workers.dev/mcp"
+    }
+  }
+}
+```
+
+## MCP Client Config (local/stdio)
 
 ```json
 {

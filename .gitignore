@@ -7,3 +7,4 @@ dist/
 *.sqlite
 .mcp.json
 :memory:
+.mcpregistry_*

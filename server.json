@@ -6,12 +6,12 @@
     "url": "https://github.com/teamsincetoday/podcast-commerce-mcp",
     "source": "github"
   },
-  "version": "0.1.0",
+  "version": "0.1.1",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "podcast-commerce-mcp",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "transport": {
         "type": "stdio"
       },
@@ -35,7 +35,7 @@
     {
       "registryType": "npm",
       "identifier": "podcast-commerce-mcp",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "transport": {
         "type": "streamable-http",
         "url": "https://podcast-commerce-mcp.sincetoday.workers.dev/mcp"

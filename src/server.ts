@@ -149,7 +149,7 @@ export function createServer(): McpServer {
         .string()
         .min(1)
         .max(TRANSCRIPT_MAX_CHARS)
-        .describe("Raw transcript text OR a URL to a .txt transcript file"),
+        .describe("Raw transcript text or a YouTube URL (e.g. https://youtube.com/watch?v=VIDEO_ID) — YouTube transcription uses auto-generated captions; pass plain text for reliable results"),
       episode_id: z
         .string()
         .max(ID_MAX_CHARS)
@@ -250,13 +250,13 @@ export function createServer(): McpServer {
 
   server.tool(
     "analyze_episode_sponsors",
-    "Identify and score podcast sponsor segments (host-read ads, mid-roll, pre-roll). Returns sponsor name, ad placement type, call-to-action URL, estimated read-through rate, and revenue metrics based on category benchmarks — not live ad-platform data. Use for advertising intelligence, CPM estimation, and sponsor outreach research. Use this tool when you need sponsor metrics only; for the full product and recommendation list use extract_podcast_products instead. Reuses cached extraction when episode_id matches a prior extract_podcast_products call.",
+    "Identify and score podcast sponsor segments (host-read ads, mid-roll, pre-roll). Returns sponsor name, ad placement type, call-to-action URL, estimated read-through rate, and revenue metrics based on category benchmarks — not live ad-platform data. Use for advertising intelligence, CPM estimation, and sponsor outreach research. Use this tool when you need sponsor metrics only; for the full product and recommendation list use extract_podcast_products instead. Reuses cached extraction when episode_id matches a prior extract_podcast_products call. Example: episode_id='huberman-ep-301' → returns [{sponsor:'Athletic Greens', placement:'pre-roll', estimated_cpm:25, read_through_rate:0.72}].",
     {
       transcript: z
         .string()
         .min(1)
         .max(TRANSCRIPT_MAX_CHARS)
-        .describe("Raw transcript text OR a URL to a .txt transcript file"),
+        .describe("Raw transcript text or a YouTube URL (e.g. https://youtube.com/watch?v=VIDEO_ID) — YouTube transcription uses auto-generated captions; pass plain text for reliable results"),
       episode_id: z
         .string()
         .max(ID_MAX_CHARS)

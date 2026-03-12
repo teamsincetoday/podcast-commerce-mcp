@@ -27,6 +27,7 @@ import {
 } from "./extractor.js";
 import { CloudflareMetering } from "./metering-cloudflare.js";
 import type { ExtractionResult, AuthResult } from "./types.js";
+import { generateShowNotes } from "./show-notes-formatter.js";
 
 // ============================================================================
 // CONSTANTS
@@ -35,7 +36,7 @@ import type { ExtractionResult, AuthResult } from "./types.js";
 const SERVER_NAME = "podcast-commerce-intelligence";
 const SERVER_VERSION = "0.1.0";
 const TOOL_PRICE_USD = 0.01;
-const TOOL_NAMES = ["extract_podcast_products", "analyze_episode_sponsors", "track_product_trends", "compare_products_across_shows"] as const;
+const TOOL_NAMES = ["extract_podcast_products", "analyze_episode_sponsors", "track_product_trends", "compare_products_across_shows", "generate_show_notes_section"] as const;
 
 export const FREE_TIER_DAILY_LIMIT = 200;
 export const TRANSCRIPT_MAX_CHARS = 100_000;
@@ -539,6 +540,91 @@ function createMcpServer(env: Env, request: Request, ctx: ExecutionContext): Mcp
           ? "upstream service temporarily unavailable"
           : (err instanceof Error ? err.message : "internal error");
         return errorResult(`Cross-show comparison failed: ${message}`);
+      }
+    }
+  );
+
+  // --------------------------------------------------------------------------
+  // TOOL 5: generate_show_notes_section
+  // --------------------------------------------------------------------------
+
+  server.tool(
+    "generate_show_notes_section",
+    "Format extracted podcast products into a shoppable show notes section. Returns a ready-to-paste markdown or HTML product list, grouped by endorsement strength (strong/moderate/mention), with affiliate links where resolved. Use after extract_podcast_products — either pass episode_id to use cached extraction, or pass products[] directly. Handles null affiliate_link gracefully (shows product name without link). Format: markdown (default) produces copy-paste text for show notes editors; html produces embeddable markup. Style: full (default) groups by endorsement with context quotes; minimal produces a compact list.",
+    {
+      episode_id: z
+        .string()
+        .max(ID_MAX_CHARS)
+        .optional()
+        .describe(
+          "Episode identifier from a prior extract_podcast_products call — uses cached extraction. Example: 'huberman-lab-ep-123'"
+        ),
+      products: z
+        .array(
+          z.object({
+            name: z.string(),
+            category: z.string(),
+            mention_context: z.string().optional(),
+            speaker: z.string().nullable().optional(),
+            confidence: z.number(),
+            recommendation_strength: z.string(),
+            affiliate_link: z.string().nullable().optional(),
+            mention_count: z.number().optional(),
+          })
+        )
+        .optional()
+        .describe(
+          "Raw products array from extract_podcast_products output. Use instead of episode_id when passing data directly."
+        ),
+      format: z
+        .enum(["markdown", "html"])
+        .optional()
+        .describe("Output format: markdown (default) or html"),
+      style: z
+        .enum(["minimal", "full"])
+        .optional()
+        .describe(
+          "minimal = name + category list; full (default) = grouped by endorsement strength with context quotes"
+        ),
+      api_key: z
+        .string()
+        .max(API_KEY_MAX_CHARS)
+        .optional()
+        .describe("Optional API key for paid access beyond the free tier"),
+    },
+    async ({ episode_id, products: rawProducts, format, style, api_key }) => {
+      const start = Date.now();
+
+      const auth = await authorize(env, request, api_key);
+      if (!auth.authorized) {
+        if (metering) ctx.waitUntil(metering.record({ toolName: "_auth_failure", paymentMethod: "free_tier", processingTimeMs: 0, success: false }));
+        return paymentRequiredResult(auth.reason ?? "Payment required");
+      }
+
+      try {
+        let products;
+        if (rawProducts) {
+          products = rawProducts as import("./types.js").ProductMention[];
+        } else if (episode_id) {
+          const cached = await cacheGet(env.PODCAST_CACHE, episode_id);
+          if (!cached) {
+            return errorResult(`No cached extraction found for episode_id: "${episode_id}". Run extract_podcast_products first.`);
+          }
+          products = cached.products;
+        } else {
+          return errorResult("Provide either episode_id or products[].");
+        }
+
+        const fmt = format ?? "markdown";
+        const sty = style ?? "full";
+        const section = generateShowNotes(products, fmt, sty);
+
+        if (metering) ctx.waitUntil(metering.record({ toolName: "generate_show_notes_section", paymentMethod: meteringMethod(auth.method), amountUsd: auth.method === "api_key" ? TOOL_PRICE_USD : 0, processingTimeMs: Date.now() - start, success: true }));
+        return { content: [{ type: "text", text: section }] };
+      } catch (err) {
+        if (metering) ctx.waitUntil(metering.record({ toolName: "generate_show_notes_section", paymentMethod: meteringMethod(auth.method), processingTimeMs: Date.now() - start, success: false }));
+        const message = err instanceof Error ? err.message : "internal error";
+        return errorResult(`Show notes generation failed: ${message}`);
       }
     }
   );

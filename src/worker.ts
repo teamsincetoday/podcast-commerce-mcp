@@ -703,6 +703,17 @@ function getExamplesResponse() {
         value_narrative: "recommendation_strength: 'strong' on Oura Ring with no sponsor tag = organic endorsement from a trusted host. Higher-converting than a sponsor read. Find the Oura affiliate program and place it in show notes immediately. AG1 estimated_read_through: 0.72 — 72% read-through. Benchmark your own shows against this. Run analyze_episode_sponsors with episode_id: 'huberman-ep-312' for CPM estimates without re-processing.",
         eval: { F1: 0.95, latency_ms: 8220, cost_usd: 0.000365 },
       },
+      {
+        tool: "generate_show_notes_section",
+        description: "Formats extracted products into a ready-to-publish shoppable show notes section. Call after extract_podcast_products. Accepts episode_id (uses KV cache — no re-extraction) or a products[] array directly. No AI call — pure formatting, <10ms.",
+        input: {
+          episode_id: "huberman-ep-312",
+          format: "markdown",
+          style: "full",
+        },
+        output: "## Products in This Episode\n\n### ⭐ Top Picks\n\n- **AG1 (Athletic Greens)** — supplement\n  > *\"today's episode is brought to you by AG1. I've been taking it every morning for six months\"*\n- **Momentous Omega-3** — supplement\n  > *\"their omega-3 is the only one I trust, cold-pressed, no fishy aftertaste\"*\n- **Oura Ring** — physical_goods\n  > *\"I've been wearing it for sleep tracking for two years. They're not a sponsor, just a genuine rec\"*\n\n---\n*Affiliate links help support the show. Thank you.*",
+        value_narrative: "Paste directly into show notes — no manual formatting step. Reads from the same KV cache as extract_podcast_products so no OpenAI cost for formatting. When ChatAds is configured, affiliate_link fields populate automatically and every product link is monetized and tracked.",
+      },
     ],
   };
 }

@@ -143,7 +143,7 @@ export function createServer(): McpServer {
 
   server.tool(
     "extract_podcast_products",
-    "Extract affiliate products, sponsored brands, and product recommendations from a podcast transcript. Returns each product's name, category (physical_goods, saas, course, book, service), confidence score, recommendation strength, and sponsor flag. Use for podcast monetization intelligence, affiliate program discovery, and brand mention tracking. Caches results by episode_id for cross-episode trend analysis.",
+    "Extract affiliate products, sponsored brands, and host recommendations from a podcast transcript (text input only — does not process audio or video). Returns product name, category, confidence score, recommendation strength, and sponsor flag. Call this before analyze_episode_sponsors or track_product_trends — both tools reuse its cache. Use for podcast monetization, affiliate program discovery, and episode-to-episode trend tracking. Returns empty products array (not an error) when no product mentions are found. Example: episode_id='huberman-ep-301', category_filter=['physical_goods','supplement'].",
     {
       transcript: z
         .string()
@@ -250,7 +250,7 @@ export function createServer(): McpServer {
 
   server.tool(
     "analyze_episode_sponsors",
-    "Identify and score podcast sponsor segments — host-read ads, mid-roll spots, pre-roll. Returns sponsor name, ad placement type, call-to-action URL, estimated read-through rate, and aggregate sponsor revenue metrics. Use for podcast advertising intelligence, CPM estimation, and sponsor outreach research. Reuses cached extraction when episode_id matches a prior extract_podcast_products call.",
+    "Identify and score podcast sponsor segments (host-read ads, mid-roll, pre-roll). Returns sponsor name, ad placement type, call-to-action URL, estimated read-through rate, and revenue metrics based on category benchmarks — not live ad-platform data. Use for advertising intelligence, CPM estimation, and sponsor outreach research. Use this tool when you need sponsor metrics only; for the full product and recommendation list use extract_podcast_products instead. Reuses cached extraction when episode_id matches a prior extract_podcast_products call.",
     {
       transcript: z
         .string()
@@ -338,7 +338,7 @@ export function createServer(): McpServer {
 
   server.tool(
     "track_product_trends",
-    "Compare affiliate product and brand mention frequency across multiple podcast episodes to detect rising, stable, and declining trends. Returns trend velocity, mention count per episode, and category breakdown. Use for podcast affiliate marketing optimization, seasonal product tracking, and sponsor category analysis. Requires prior extract_podcast_products calls for each episode_id.",
+    "Compare affiliate product and brand mention frequency across multiple podcast episodes to detect rising, stable, and declining trends. Returns trend velocity, mention count per episode, and category breakdown. No AI call — computed from cached extraction data only. Use for affiliate marketing optimization, seasonal product tracking, and content calendar planning. Requires prior extract_podcast_products call for each episode_id — returns an error listing missing IDs if any are not in cache. Example: episode_ids=['ep-301','ep-302','ep-303'].",
     {
       episode_ids: z
         .array(z.string().max(ID_MAX_CHARS))
@@ -432,7 +432,7 @@ export function createServer(): McpServer {
 
   server.tool(
     "compare_products_across_shows",
-    "Compare and rank product mentions across multiple podcast shows using cached extractions — no re-run. Collapses a 3-call manual join into 1 tool call. Performs entity resolution to identify the same product mentioned across shows. Returns ranked cross-show product list with per-show context, average confidence, and recommendation consensus. Use for multi-show affiliate research, 'best of' page generation, and cross-show brand ranking. Supports physical_goods, saas, supplement, and all other categories. Requires prior extract_podcast_products calls for each show_id.",
+    "Compare and rank product mentions across multiple podcast shows using cached extractions — no re-run or extra AI cost. Collapses a 3-call manual join into 1 tool call with entity resolution to match the same product across different show mentions. Returns ranked products with per-show context, average confidence, recommendation consensus, and brand aggregation. Use for multi-show affiliate research, 'best of' page generation, and cross-show brand ranking. Requires prior extract_podcast_products call for each show_id — returns error listing missing IDs if any are absent. Example: show_ids=['epic-gardening','garden-answer'], min_confidence=0.85.",
     {
       show_ids: z
         .array(z.string().max(ID_MAX_CHARS))

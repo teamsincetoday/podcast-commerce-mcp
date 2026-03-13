@@ -714,6 +714,40 @@ function getExamplesResponse() {
         output: "## Products in This Episode\n\n### ⭐ Top Picks\n\n- **AG1 (Athletic Greens)** — supplement\n  > *\"today's episode is brought to you by AG1. I've been taking it every morning for six months\"*\n- **Momentous Omega-3** — supplement\n  > *\"their omega-3 is the only one I trust, cold-pressed, no fishy aftertaste\"*\n- **Oura Ring** — physical_goods\n  > *\"I've been wearing it for sleep tracking for two years. They're not a sponsor, just a genuine rec\"*\n\n---\n*Affiliate links help support the show. Thank you.*",
         value_narrative: "Paste directly into show notes — no manual formatting step. Reads from the same KV cache as extract_podcast_products so no OpenAI cost for formatting. When ChatAds is configured, affiliate_link fields populate automatically and every product link is monetized and tracked.",
       },
+      {
+        tool: "analyze_episode_sponsors",
+        description: "Score sponsor segments from a cached podcast extraction. Returns CPM benchmark, read-through estimate, host fit score, and CTA quality score per sponsor. Uses cached data — no AI cost. Call after extract_podcast_products.",
+        input: { episode_id: "huberman-ep-312" },
+        output: {
+          episode_id: "huberman-ep-312",
+          sponsors: [{ sponsor_name: "AG1", read_type: "host_read", estimated_cpm_usd: 42, estimated_read_through: 0.72, host_fit_score: 0.91, call_to_action: "code HUBERMAN for a free year's supply of Vitamin D", cta_quality: "high", recommendation: "Renew at $45 CPM — host credibility + high read-through justify premium" }],
+          _meta: { processing_time_ms: 85, ai_cost_usd: 0, cache_hit: true },
+        },
+        value_narrative: "CPM $42, read-through 0.72, fit 0.91. Use estimated_cpm_usd as a floor in your next sponsorship negotiation. host_fit_score below 0.7 = misaligned sponsor — cite this data to decline or reprice.",
+      },
+      {
+        tool: "track_product_trends",
+        description: "Identify rising and falling product trends across episodes. Shows mention velocity, trend direction (hot/rising/stable/fading), and episode count. Reads from cached extractions — no re-processing cost.",
+        input: { show_id: "huberman-lab", weeks: 8 },
+        output: {
+          show_id: "huberman-lab",
+          trending_up: [{ product: "Momentous Omega-3", category: "supplement", mention_velocity: 2.3, episodes_mentioned: 5, trend: "hot" }, { product: "Oura Ring", category: "physical_goods", mention_velocity: 1.8, episodes_mentioned: 4, trend: "rising" }],
+          trending_down: [{ product: "Eight Sleep Pod", category: "physical_goods", mention_velocity: 0.3, episodes_mentioned: 1, trend: "fading" }],
+          _meta: { episodes_analyzed: 24, date_range: "8 weeks" },
+        },
+        value_narrative: "Momentous trending hot (2.3× velocity) — affiliate outreach NOW before it peaks. Eight Sleep fading — don't invest in that relationship. Act on 'hot' items within 48h for maximum conversion window.",
+      },
+      {
+        tool: "compare_products_across_shows",
+        description: "Find products and brands mentioned across multiple shows. Resolves entity names (e.g. 'Fiskars Snips' + 'Fiskars Broadfork' → brand: Fiskars), ranks by avg_confidence × show_count, and returns recommendation_consensus across shows.",
+        input: { show_ids: ["huberman-lab", "tim-ferriss-show", "all-in-podcast"], min_confidence: 0.8 },
+        output: {
+          products: [{ product_name: "AG1 (Athletic Greens)", show_count: 3, avg_confidence: 0.96, recommendation_consensus: "unanimous", shows: ["huberman-lab", "tim-ferriss-show", "all-in-podcast"] }],
+          brands: [{ brand: "AG1", product_count: 2, show_count: 3, avg_confidence: 0.95 }],
+          _meta: { shows_analyzed: 3, episodes_analyzed: 72 },
+        },
+        value_narrative: "AG1 at unanimous consensus across 3 major shows = category-defining endorsement. This is multi-show proof for a sponsor pitch deck. Shows that recommend the same product independently have no coordinated sponsor bias — worth 3-5× a single-show mention in advertiser credibility.",
+      },
     ],
   };
 }

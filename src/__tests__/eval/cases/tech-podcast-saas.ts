@@ -11,6 +11,10 @@
  *   - Figma (saas, moderate)
  *   - Cursor (saas, strong)
  *   - Perplexity (saas, moderate)
+ *
+ * NOT in expected: Jira, Asana — mentioned as explicitly rejected alternatives
+ * ("We tried Jira, we tried Asana, nothing comes close to Linear"). Correct
+ * extractor should omit these; including them as optional penalises correct behaviour.
  */
 
 import type { PodcastEvalCase } from "../types.js";
@@ -68,8 +72,6 @@ export const techPodcastSaas: PodcastEvalCase = {
     { name: "Figma",       category: "saas", required: true,  minStrength: "moderate" },
     { name: "Cursor",      category: "saas", required: true,  minStrength: "strong" },
     { name: "Perplexity",  category: "saas", required: true,  minStrength: "moderate" },
-    { name: "Jira",        category: "saas", required: false },
-    { name: "Asana",       category: "saas", required: false },
   ],
   expectedSponsors: [],
   maxCostUsd: 0.01,

@@ -5,15 +5,18 @@
  * Ground truth: 7 product mentions, 1 sponsor.
  *
  * Expected products (required):
- *   - Athletic Greens / AG1 (supplement, strong)
+ *   - Athletic Greens (supplement, strong) — AG1 is the product abbreviation, same entity
  *   - Momentous Omega-3 (supplement, strong)
  *   - Whoop (physical_goods, strong)
  *   - Thorne Research (supplement, moderate)
  *   - Eight Sleep (physical_goods, moderate)
  *
  * Optional (may be extracted):
- *   - Huberman Lab podcast (media)
  *   - Rogue Fitness (physical_goods)
+ *   - Oura Ring (physical_goods) — mentioned as secondary option to Whoop
+ *
+ * NOT in expected: AG1 — brand abbreviation for Athletic Greens (same entity, already required).
+ * A correct extractor extracts one entity per product, not both the name and its abbreviation.
  */
 
 import type { PodcastEvalCase } from "../types.js";
@@ -67,13 +70,12 @@ export const healthPodcastSupplements: PodcastEvalCase = {
   episodeId: "health-supplements-001",
   expectedProducts: [
     { name: "Athletic Greens",  category: "supplement",      required: true,  minStrength: "strong" },
-    { name: "AG1",             category: "supplement",      required: false },
-    { name: "Whoop",           category: "physical_goods",  required: true,  minStrength: "strong" },
-    { name: "Eight Sleep",     category: "physical_goods",  required: true,  minStrength: "strong" },
-    { name: "Momentous",       category: "supplement",      required: true,  minStrength: "moderate" },
-    { name: "Thorne",          category: "supplement",      required: true,  minStrength: "moderate" },
-    { name: "Rogue Fitness",   category: "physical_goods",  required: false },
-    { name: "Oura Ring",       category: "physical_goods",  required: false },
+    { name: "Whoop",            category: "physical_goods",  required: true,  minStrength: "strong" },
+    { name: "Eight Sleep",      category: "physical_goods",  required: true,  minStrength: "strong" },
+    { name: "Momentous",        category: "supplement",      required: true,  minStrength: "moderate" },
+    { name: "Thorne",           category: "supplement",      required: true,  minStrength: "moderate" },
+    { name: "Rogue Fitness",    category: "physical_goods",  required: false },
+    { name: "Oura Ring",        category: "physical_goods",  required: false },
   ],
   expectedSponsors: [
     { name: "Athletic Greens", required: true },

@@ -513,11 +513,18 @@ function normalizeProductName(name: string): string {
 
 /**
  * Extract brand from a product name using a simple first-word heuristic.
- * Returns null for single-word names.
+ * For single-word names, returns the name itself if it looks like a proper noun
+ * or acronym (starts with uppercase), so that brands like "AG1", "Oura", "Viome"
+ * surface correctly in cross-show brand rollups. Returns null for lowercase
+ * single-word generics like "supplement".
  */
 function extractBrand(productName: string): string | null {
   const words = productName.trim().split(/\s+/);
-  if (words.length <= 1) return null;
+  if (words.length === 0) return null;
+  if (words.length === 1) {
+    const word = words[0] ?? "";
+    return /^[A-Z]/.test(word) ? word : null;
+  }
   return words[0] ?? null;
 }
 

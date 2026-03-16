@@ -517,6 +517,35 @@ describe("compareProductsAcrossShows", () => {
     expect(report.products[0]?.brand).toBe("Fiskars");
   });
 
+  it("extracts single-word capitalized product name as its own brand", () => {
+    const extractions = [
+      makeExtraction("show-1", [{ name: "Oura", confidence: 0.92 }]),
+      makeExtraction("show-2", [{ name: "Oura", confidence: 0.90 }]),
+    ];
+    const report = compareProductsAcrossShows({ extractions });
+    expect(report.products[0]?.brand).toBe("Oura");
+  });
+
+  it("brands[]: surfaces single-word capitalized brands across shows", () => {
+    const extractions = [
+      makeExtraction("show-1", [{ name: "AG1", confidence: 0.92 }]),
+      makeExtraction("show-2", [{ name: "AG1", confidence: 0.88 }]),
+    ];
+    const report = compareProductsAcrossShows({ extractions, minConfidence: 0.75 });
+    const ag1 = report.brands.find((b) => b.brand === "AG1");
+    expect(ag1).toBeDefined();
+    expect(ag1?.show_count).toBe(2);
+  });
+
+  it("brands[]: excludes lowercase single-word generic products from brand rollup", () => {
+    const extractions = [
+      makeExtraction("show-1", [{ name: "supplement", confidence: 0.92 }]),
+      makeExtraction("show-2", [{ name: "supplement", confidence: 0.88 }]),
+    ];
+    const report = compareProductsAcrossShows({ extractions, minConfidence: 0.75 });
+    expect(report.brands.find((b) => b.brand === "supplement")).toBeUndefined();
+  });
+
   it("returns correct show_ids in report", () => {
     const extractions = [
       makeExtraction("garden-show-1", [{ name: "Hori Knife", confidence: 0.9 }]),

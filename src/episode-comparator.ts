@@ -11,6 +11,15 @@
 import type { EpisodeExtraction, TrendingProduct, ProductCategory } from "./types.js";
 
 // ============================================================================
+// CONSTANTS
+// ============================================================================
+
+/** Numeric weight for recommendation_strength values used in avg computation. */
+const STRENGTH_RANK: Record<string, number> = {
+  strong: 3, moderate: 2, mention: 1, negative: 0,
+};
+
+// ============================================================================
 // COMPARISON RESULT
 // ============================================================================
 
@@ -198,14 +207,14 @@ export function computeTrendingProducts(
       const existing = productMap.get(key);
       if (existing) {
         existing.mention_count += 1;
-        existing.total_strength += product.recommendation_strength;
+        existing.total_strength += STRENGTH_RANK[product.recommendation_strength] ?? 1;
         existing.episodes.add(episode.episode_id);
       } else {
         productMap.set(key, {
           name: product.name,
           category: product.category,
           mention_count: 1,
-          total_strength: product.recommendation_strength,
+          total_strength: STRENGTH_RANK[product.recommendation_strength] ?? 1,
           episodes: new Set([episode.episode_id]),
         });
       }

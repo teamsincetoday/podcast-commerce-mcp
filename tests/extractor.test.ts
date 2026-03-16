@@ -145,6 +145,49 @@ describe("normalizeProducts", () => {
 
     expect(normalizeProducts(raw)).toHaveLength(0);
   });
+
+  // EXP-2026-03-11-3: aesthetic tags coverage
+  it("attaches aestheticTags when all four aesthetic fields are valid", () => {
+    const raw: OpenAIProductResponse["products"] = [
+      {
+        name: "Headspace",
+        category: "saas",
+        mention_context: "I meditate with Headspace daily",
+        speaker: "Host",
+        confidence: 0.9,
+        recommendation_strength: "strong",
+        affiliate_link: null,
+        aesthetic_warmth: "warm",
+        aesthetic_density: "minimal",
+        aesthetic_origin: "natural",
+        aesthetic_tradition: "contemporary",
+      },
+    ];
+
+    const result = normalizeProducts(raw);
+    expect(result[0]?.aestheticTags).toBeDefined();
+    expect(result[0]?.aestheticTags?.warmth).toBe("warm");
+    expect(result[0]?.aestheticTags?.density).toBe("minimal");
+    expect(result[0]?.aestheticTags?.origin).toBe("natural");
+    expect(result[0]?.aestheticTags?.tradition).toBe("contemporary");
+  });
+
+  it("omits aestheticTags when all aesthetic fields are absent", () => {
+    const raw: OpenAIProductResponse["products"] = [
+      {
+        name: "Notion",
+        category: "saas",
+        mention_context: "I use Notion every day",
+        speaker: null,
+        confidence: 0.8,
+        recommendation_strength: "moderate",
+        affiliate_link: null,
+      },
+    ];
+
+    const result = normalizeProducts(raw);
+    expect(result[0]?.aestheticTags).toBeUndefined();
+  });
 });
 
 // ============================================================================

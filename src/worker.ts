@@ -658,7 +658,7 @@ MCP server for podcast commerce intelligence. Extracts affiliate products, spons
 
 ### track_product_trends
 - Input: episode_ids (list of previously extracted episode IDs), optional category_filter
-- Output: trends array [{name, category, trend (rising|stable|falling), episodes_present, total_mentions}]
+- Output: trends array [{name, category, trend (rising|stable|falling), episodes_present, total_mentions, avg_recommendation_strength}], top_category (category with most trending products)
 - Typical output: 200-400 tokens
 - Latency: <100ms (local computation, no OpenAI call)
 - Requires: prior extract_podcast_products calls for each episode_id
@@ -670,6 +670,14 @@ MCP server for podcast commerce intelligence. Extracts affiliate products, spons
 - Latency: <100ms (local computation, no OpenAI call)
 - Requires: prior extract_podcast_products calls for each show_id
 - Use case: replaces 3-call manual join with 1 call; ideal for affiliate page generation and multi-show product research
+
+### generate_show_notes_section
+- Input: episode_id (uses cached extraction, no re-processing) OR products[] array, optional format (markdown|html, default markdown), optional style (minimal|full, default full)
+- Output: formatted shoppable show notes section — products grouped by endorsement strength with context quotes and affiliate links
+- Typical output: 200-500 tokens
+- Latency: <10ms (pure formatting, no OpenAI call)
+- Requires: prior extract_podcast_products call (uses KV cache); or pass products[] directly
+- Use case: paste directly into show notes or blog post; full style groups by endorsement strength with context quotes
 
 ## Categories
 physical_goods, saas, course, service, supplement, media, event, other

@@ -1,18 +1,31 @@
 {
   "name": "podcast-commerce-mcp",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Podcast Commerce Intelligence MCP Server - Extract product mentions, score recommendations, and track trends from podcast transcripts. Built for the agent-to-agent economy.",
   "type": "module",
   "license": "MIT",
   "author": "Since Today Studio <team@sincetoday.com>",
-  "engines": { "node": ">=20.0.0" },
-  "bin": { "podcast-commerce-mcp": "./dist/cli.js" },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "bin": {
+    "podcast-commerce-mcp": "./dist/cli.js"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" }
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
   },
-  "files": ["dist", "data", "README.md", "LICENSE", ".env.example"],
+  "files": [
+    "dist",
+    "data",
+    "README.md",
+    "LICENSE",
+    ".env.example"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch src/cli.ts",
@@ -36,5 +49,15 @@
     "typescript": "^5.7.0",
     "vitest": "^4.0.18"
   },
-  "keywords": ["mcp", "model-context-protocol", "podcast", "commerce", "ner", "product-extraction", "x402", "ai-agent", "agent-to-agent"]
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "podcast",
+    "commerce",
+    "ner",
+    "product-extraction",
+    "x402",
+    "ai-agent",
+    "agent-to-agent"
+  ]
 }

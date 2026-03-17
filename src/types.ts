@@ -87,6 +87,8 @@ export interface SponsorAnalysis {
   /** Total number of sponsor segments identified in the episode. */
   sponsor_count: number;
   avg_read_through: number;
+  /** Fraction of sponsor segments that include a trackable CTA (promo code, URL). 0 = no CTAs, 1 = all sponsors have CTAs. Gate: cta_rate > 0 means CTA extraction is worth running. */
+  cta_rate: number;
   _meta: Record<string, unknown>;
 }
 

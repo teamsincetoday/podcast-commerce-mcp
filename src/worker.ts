@@ -652,7 +652,7 @@ MCP server for podcast commerce intelligence. Extracts affiliate products, spons
 
 ### analyze_episode_sponsors
 - Input: same as extract_podcast_products; reuses cache if episode_id matches prior extraction
-- Output: sponsors array [{sponsor_name, segment_start_context, read_type, estimated_read_through, call_to_action}], sponsor_count, avg_read_through
+- Output: sponsors array [{sponsor_name, segment_start_context, read_type, estimated_read_through, call_to_action}], sponsor_count, avg_read_through, cta_rate (0–1 fraction of sponsors with trackable CTAs)
 - Typical output: 150-300 tokens
 - Latency: 2-4 seconds (or <100ms if cache hit)
 

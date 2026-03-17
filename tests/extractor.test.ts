@@ -736,6 +736,7 @@ describe("buildSponsorAnalysis", () => {
     const analysis = buildSponsorAnalysis(extraction);
     expect(analysis.sponsor_count).toBe(2);
     expect(analysis.avg_read_through).toBe(0.6);
+    expect(analysis.cta_rate).toBe(0.5); // 1 of 2 sponsors has CTA
   });
 
   it("returns sponsor_count=0 and avg_read_through=0 for episodes with no sponsors", () => {
@@ -748,6 +749,7 @@ describe("buildSponsorAnalysis", () => {
     const analysis = buildSponsorAnalysis(extraction);
     expect(analysis.sponsor_count).toBe(0);
     expect(analysis.avg_read_through).toBe(0);
+    expect(analysis.cta_rate).toBe(0); // 0 sponsors → 0 rate
   });
 });
 

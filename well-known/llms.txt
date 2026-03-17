@@ -13,16 +13,32 @@ MCP server for podcast commerce intelligence. Extracts affiliate products, spons
 
 ### analyze_episode_sponsors
 - Input: same as extract_podcast_products; reuses cache if episode_id matches prior extraction
-- Output: sponsors array [{sponsor_name, segment_start_context, read_type, estimated_read_through, call_to_action}], sponsor_count, avg_read_through
+- Output: sponsors array [{sponsor_name, segment_start_context, read_type, estimated_read_through, call_to_action}], sponsor_count, avg_read_through, cta_rate (0–1 fraction of sponsors with trackable CTAs)
 - Typical output: 150-300 tokens
 - Latency: 2-4 seconds (or <100ms if cache hit)
 
 ### track_product_trends
 - Input: episode_ids (list of previously extracted episode IDs), optional category_filter
-- Output: trends array [{name, category, trend (rising|stable|falling), episodes_present, total_mentions}]
+- Output: trends array [{name, category, trend (rising|stable|falling), episodes_present, total_mentions, avg_recommendation_strength}], top_category (category with most trending products)
 - Typical output: 200-400 tokens
 - Latency: <100ms (local computation, no OpenAI call)
 - Requires: prior extract_podcast_products calls for each episode_id
+
+### compare_products_across_shows
+- Input: show_ids (list of previously extracted show/episode IDs), optional category, optional min_confidence (default 0.85), optional min_show_count (default 2)
+- Output: products array [{product_name, brand, category, shows: [{show_id, episode_id, mention_context, host, confidence, recommendation_strength}], show_count, avg_confidence, recommendation_consensus}]
+- Typical output: 300-600 tokens
+- Latency: <100ms (local computation, no OpenAI call)
+- Requires: prior extract_podcast_products calls for each show_id
+- Use case: replaces 3-call manual join with 1 call; ideal for affiliate page generation and multi-show product research
+
+### generate_show_notes_section
+- Input: episode_id (uses cached extraction, no re-processing) OR products[] array, optional format (markdown|html, default markdown), optional style (minimal|full, default full)
+- Output: formatted shoppable show notes section — products grouped by endorsement strength with context quotes and affiliate links
+- Typical output: 200-500 tokens
+- Latency: <10ms (pure formatting, no OpenAI call)
+- Requires: prior extract_podcast_products call (uses KV cache); or pass products[] directly
+- Use case: paste directly into show notes or blog post; full style groups by endorsement strength with context quotes
 
 ## Categories
 physical_goods, saas, course, service, supplement, media, event, other

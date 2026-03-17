@@ -334,6 +334,10 @@ describe("computeTrends", () => {
     const report = computeTrends(extractions);
     const g = report.trends.find((t) => t.name === "Grammarly");
     expect(g?.total_mentions).toBeGreaterThan(0);
+    // avg_recommendation_strength must be finite (regression guard for NaN)
+    expect(Number.isFinite(g?.avg_recommendation_strength)).toBe(true);
+    // helper uses "moderate" → STRENGTH_RANK=2, avg should be 2.0
+    expect(g?.avg_recommendation_strength).toBe(2);
   });
 
   it("reports correct episode_ids", () => {

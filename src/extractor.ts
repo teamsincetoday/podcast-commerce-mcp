@@ -408,10 +408,10 @@ export function computeTrends(extractions: ExtractionResult[]): TrendReport {
     return { trends: [], episode_ids: [] };
   }
 
-  // Aggregate: product name → { episodes_present, total_mentions, category }
+  // Aggregate: product name → { episodes_present, total_mentions, total_strength, category }
   const productMap = new Map<
     string,
-    { episodes_present: number; total_mentions: number; category: ProductCategory }
+    { episodes_present: number; total_mentions: number; total_strength: number; category: ProductCategory }
   >();
 
   for (const extraction of extractions) {
@@ -420,6 +420,7 @@ export function computeTrends(extractions: ExtractionResult[]): TrendReport {
 
     for (const product of extraction.products) {
       const key = product.name.toLowerCase();
+      const strengthScore = STRENGTH_RANK[product.recommendation_strength] ?? 1;
 
       if (!seenInEpisode.has(key)) {
         seenInEpisode.add(key);
@@ -427,10 +428,12 @@ export function computeTrends(extractions: ExtractionResult[]): TrendReport {
         if (existing) {
           existing.episodes_present += 1;
           existing.total_mentions += product.mention_count;
+          existing.total_strength += strengthScore;
         } else {
           productMap.set(key, {
             episodes_present: 1,
             total_mentions: product.mention_count,
+            total_strength: strengthScore,
             category: product.category,
           });
         }
@@ -471,6 +474,10 @@ export function computeTrends(extractions: ExtractionResult[]): TrendReport {
       trend,
       episodes_present: data.episodes_present,
       total_mentions: data.total_mentions,
+      avg_recommendation_strength:
+        data.episodes_present > 0
+          ? Math.round((data.total_strength / data.episodes_present) * 100) / 100
+          : 0,
     });
   }
 

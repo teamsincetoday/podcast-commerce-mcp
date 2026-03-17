@@ -383,6 +383,7 @@ export function buildSponsorAnalysis(extraction: ExtractionResult): SponsorAnaly
 
   return {
     sponsors,
+    sponsor_count,
     avg_read_through: Math.round(avg_read_through * 100) / 100,
     _meta: {},
   };
@@ -489,9 +490,18 @@ export function computeTrends(extractions: ExtractionResult[]): TrendReport {
     return b.episodes_present - a.episodes_present;
   });
 
+  // top_category: category with the most trending products — routing signal
+  const categoryCount = new Map<ProductCategory, number>();
+  for (const t of trends) {
+    categoryCount.set(t.category, (categoryCount.get(t.category) ?? 0) + 1);
+  }
+  const topEntry = [...categoryCount.entries()].sort((a, b) => b[1] - a[1])[0];
+  const top_category = topEntry ? topEntry[0] : undefined;
+
   return {
     trends,
     episode_ids,
+    ...(top_category !== undefined ? { top_category } : {}),
   };
 }
 

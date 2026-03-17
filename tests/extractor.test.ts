@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { normalizeProducts, normalizeSponsorSegments, computeTrends, compareProductsAcrossShows } from "../src/extractor.js";
+import { normalizeProducts, normalizeSponsorSegments, computeTrends, compareProductsAcrossShows, buildSponsorAnalysis } from "../src/extractor.js";
 import type { ExtractionResult, OpenAIProductResponse } from "../src/types.js";
 
 // ============================================================================
@@ -715,5 +715,77 @@ describe("extractProducts (mocked OpenAI)", () => {
     expect(result.products).toHaveLength(1);
     expect(result.products[0]?.name).toBe("Headspace");
     expect(result.products[0]?.category).toBe("saas");
+  });
+});
+
+// ============================================================================
+// buildSponsorAnalysis
+// ============================================================================
+
+describe("buildSponsorAnalysis", () => {
+  it("returns sponsor_count equal to the number of sponsor segments", () => {
+    const extraction: ExtractionResult = {
+      episode_id: "ep1",
+      products: [],
+      sponsor_segments: [
+        { sponsor_name: "AG1", segment_start_context: "ctx", read_type: "host_read", estimated_read_through: 0.7, call_to_action: "use code KAI" },
+        { sponsor_name: "Helix Sleep", segment_start_context: "ctx2", read_type: "mid_roll", estimated_read_through: 0.5, call_to_action: null },
+      ],
+      _meta: { processing_time_ms: 100, ai_cost_usd: 0.001, cache_hit: false },
+    };
+    const analysis = buildSponsorAnalysis(extraction);
+    expect(analysis.sponsor_count).toBe(2);
+    expect(analysis.avg_read_through).toBe(0.6);
+  });
+
+  it("returns sponsor_count=0 and avg_read_through=0 for episodes with no sponsors", () => {
+    const extraction: ExtractionResult = {
+      episode_id: "ep-clean",
+      products: [],
+      sponsor_segments: [],
+      _meta: { processing_time_ms: 50, ai_cost_usd: 0.0005, cache_hit: false },
+    };
+    const analysis = buildSponsorAnalysis(extraction);
+    expect(analysis.sponsor_count).toBe(0);
+    expect(analysis.avg_read_through).toBe(0);
+  });
+});
+
+// ============================================================================
+// computeTrends — top_category
+// ============================================================================
+
+describe("computeTrends top_category", () => {
+  const makeExtraction = (
+    episodeId: string,
+    products: Array<{ name: string; category: string }>
+  ): ExtractionResult => ({
+    episode_id: episodeId,
+    products: products.map((p) => ({
+      name: p.name,
+      category: p.category as import("../src/types.js").ProductCategory,
+      mention_context: "context",
+      speaker: null,
+      confidence: 0.8,
+      recommendation_strength: "moderate" as import("../src/types.js").RecommendationStrength,
+      affiliate_link: null,
+      mention_count: 1,
+    })),
+    sponsor_segments: [],
+    _meta: { processing_time_ms: 100, ai_cost_usd: 0.001, cache_hit: false },
+  });
+
+  it("returns top_category as the most represented category", () => {
+    const extractions: ExtractionResult[] = [
+      makeExtraction("ep1", [{ name: "AG1", category: "supplement" }, { name: "Notion", category: "saas" }]),
+      makeExtraction("ep2", [{ name: "Athletic Greens", category: "supplement" }, { name: "Huberman Lab Podcast", category: "media" }]),
+    ];
+    const report = computeTrends(extractions);
+    expect(report.top_category).toBe("supplement");
+  });
+
+  it("returns undefined top_category for empty trends", () => {
+    const report = computeTrends([]);
+    expect(report.top_category).toBeUndefined();
   });
 });

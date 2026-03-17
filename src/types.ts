@@ -84,6 +84,8 @@ export interface ExtractionResult {
 
 export interface SponsorAnalysis {
   sponsors: SponsorSegment[];
+  /** Total number of sponsor segments identified in the episode. */
+  sponsor_count: number;
   avg_read_through: number;
   _meta: Record<string, unknown>;
 }
@@ -105,6 +107,8 @@ export interface ProductTrend {
 export interface TrendReport {
   trends: ProductTrend[];
   episode_ids: string[];
+  /** Category with the highest number of trending products — routing signal for downstream affiliate decisions. */
+  top_category?: ProductCategory;
   _meta?: Record<string, unknown>;
 }
 

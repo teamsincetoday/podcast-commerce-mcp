@@ -351,6 +351,21 @@ describe("computeTrends", () => {
     expect(report.episode_ids).toContain("ep-beta");
     expect(report.episode_ids).toHaveLength(2);
   });
+
+  it("sets brand from product name in each ProductTrend entry", () => {
+    const extractions = [
+      makeExtraction("ep1", [{ name: "AG1", category: "supplement" }]),
+      makeExtraction("ep2", [{ name: "Oura Ring", category: "supplement" }]),
+      makeExtraction("ep3", [{ name: "supplement", category: "supplement" }]),
+    ];
+    const report = computeTrends(extractions);
+    const ag1 = report.trends.find((t) => t.name === "AG1");
+    const oura = report.trends.find((t) => t.name === "Oura Ring");
+    const generic = report.trends.find((t) => t.name === "supplement");
+    expect(ag1?.brand).toBe("AG1");         // single-word uppercase → brand = self
+    expect(oura?.brand).toBe("Oura");       // two-word → first word
+    expect(generic?.brand).toBeNull();       // lowercase generic → null
+  });
 });
 
 // ============================================================================

@@ -477,6 +477,7 @@ export function computeTrends(extractions: ExtractionResult[]): TrendReport {
 
     trends.push({
       name: originalName,
+      brand: extractBrand(originalName),
       category: data.category,
       trend,
       episodes_present: data.episodes_present,

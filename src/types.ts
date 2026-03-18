@@ -98,6 +98,8 @@ export interface SponsorAnalysis {
 
 export interface ProductTrend {
   name: string;
+  /** Brand extracted from product name (e.g. "AG1", "Oura", "Huberman Lab"). Null when name is generic. Use for brand-level filtering and affiliate network queries. */
+  brand: string | null;
   category: ProductCategory;
   trend: "rising" | "stable" | "falling";
   episodes_present: number;

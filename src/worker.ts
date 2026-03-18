@@ -658,7 +658,7 @@ MCP server for podcast commerce intelligence. Extracts affiliate products, spons
 
 ### track_product_trends
 - Input: episode_ids (list of previously extracted episode IDs), optional category_filter
-- Output: trends array [{name, category, trend (rising|stable|falling), episodes_present, total_mentions, avg_recommendation_strength}], top_category (category with most trending products)
+- Output: trends array [{name, category, trend (rising|stable|falling), episodes_present, total_mentions, avg_recommendation_strength, brand: string | null — brand extracted from product name (e.g. "Oura" from "Oura Ring"), null if generic}], top_category (category with most trending products)
 - Typical output: 200-400 tokens
 - Latency: <100ms (local computation, no OpenAI call)
 - Requires: prior extract_podcast_products calls for each episode_id

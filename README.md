@@ -9,6 +9,8 @@ Extract product mentions, sponsor segments, and product trends from podcast tran
 | `extract_podcast_products` | Extract products/brands from a transcript with confidence scores |
 | `analyze_episode_sponsors` | Identify sponsor segments and estimate read-through rates |
 | `track_product_trends` | Compare product mentions across multiple episodes |
+| `compare_products_across_shows` | Cross-show product ranking with entity resolution across multiple shows |
+| `generate_show_notes_section` | Format extracted products as a shoppable show notes section |
 
 ## Quick Start
 
@@ -107,11 +109,35 @@ Returns:
 }
 ```
 
-Requires episodes to be previously extracted and cached.
+Requires episodes to be previously extracted and cached. Returns `trends[]` with `brand`, `trend` (rising/stable/falling), `avg_recommendation_strength`, and `top_category`.
+
+### `compare_products_across_shows`
+
+```json
+{
+  "show_ids": ["show-a", "show-b"],
+  "min_show_count": 2,
+  "min_confidence": 0.85
+}
+```
+
+Ranks products by how many shows mention them. Returns `products[]` with `brand`, `show_count`, `avg_confidence`, `recommendation_consensus` (unanimous/majority/mixed/rare).
+
+### `generate_show_notes_section`
+
+```json
+{
+  "episode_id": "previously-extracted-id",
+  "format": "markdown",
+  "style": "full"
+}
+```
+
+Formats cached product data as a shoppable show notes block. Returns a formatted string ready to paste into episode notes.
 
 ## Example Output
 
-Real extraction from a Huberman Lab episode transcript (eval score: **F1=0.95**, $0.000365/call, 8220ms):
+Real extraction from a Huberman Lab episode transcript (eval score: **F1=1.00**, $0.00046/call, 8100ms):
 
 ```json
 {
@@ -119,6 +145,7 @@ Real extraction from a Huberman Lab episode transcript (eval score: **F1=0.95**,
   "products": [
     {
       "name": "AG1 (Athletic Greens)",
+      "brand": "AG1",
       "category": "supplement",
       "mention_context": "today's episode is brought to you by AG1. I've been taking it every morning for six months",
       "confidence": 0.97,

@@ -269,6 +269,33 @@ export async function resolveTranscript(input: string): Promise<string> {
 }
 
 // ============================================================================
+// RETRY HELPERS
+// ============================================================================
+
+const MAX_RETRIES = 1;
+const RETRY_DELAY_MS = 1_000;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Returns true for transient OpenAI errors that are worth retrying:
+ * rate limits (429), server errors (5xx), and network timeouts.
+ * Does NOT retry on 4xx client errors (bad request, auth, etc.).
+ */
+function isRetryableError(err: unknown): boolean {
+  if (err instanceof OpenAI.APIError) {
+    return err.status === 429 || err.status >= 500;
+  }
+  if (err instanceof Error) {
+    const msg = err.message.toLowerCase();
+    return msg.includes("timeout") || msg.includes("timed out") || msg.includes("etimedout") || msg.includes("econnreset");
+  }
+  return false;
+}
+
+// ============================================================================
 // MAIN EXTRACTION
 // ============================================================================
 
@@ -311,16 +338,35 @@ export async function extractProducts(
     }
   }
 
-  const response = await client.chat.completions.create({
-    model: OPENAI_MODEL,
-    messages: [
-      { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
-      { role: "user", content: userMessage },
-    ],
-    response_format: { type: "json_object" },
-    temperature: 0,
-    max_tokens: 2000,
-  });
+  let response: Awaited<ReturnType<typeof client.chat.completions.create>> | undefined;
+  let extractionError: unknown;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      response = await client.chat.completions.create({
+        model: OPENAI_MODEL,
+        messages: [
+          { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
+          { role: "user", content: userMessage },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0,
+        max_tokens: 2000,
+      });
+      extractionError = undefined;
+      break;
+    } catch (err) {
+      extractionError = err;
+      if (attempt < MAX_RETRIES && isRetryableError(err)) {
+        await sleep(RETRY_DELAY_MS);
+      } else {
+        break;
+      }
+    }
+  }
+  if (!response) {
+    // Re-throw so the worker's try-catch can surface via errorResult()
+    throw extractionError;
+  }
 
   // Parse response
   const rawContent = response.choices[0]?.message?.content ?? "{}";

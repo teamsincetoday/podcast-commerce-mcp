@@ -137,7 +137,7 @@ Formats cached product data as a shoppable show notes block. Returns a formatted
 
 ## Example Output
 
-Real extraction from a Huberman Lab episode transcript (eval score: **F1=1.00**, $0.00046/call, 8100ms):
+Real extraction from a Huberman Lab episode transcript (live eval: **F1=89%**, 96/100 score, $0.00046/call, 8100ms):
 
 ```json
 {

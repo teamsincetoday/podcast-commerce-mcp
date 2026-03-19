@@ -1,0 +1,58 @@
+{
+  "mcp": "podcast-commerce-mcp",
+  "reports": [
+    {
+      "timestamp": "2026-03-19T16:10:00Z",
+      "eval_mode": "live",
+      "openai_model": "gpt-4o-mini",
+      "cases_passed": 3,
+      "cases_total": 3,
+      "avg_score": 95,
+      "cases": [
+        {
+          "id": "huberman-lab-sponsors",
+          "name": "Huberman Lab — Health Sponsor Episode",
+          "score": 96,
+          "passed": true,
+          "products_extracted": 4,
+          "products_expected": 5,
+          "f1": 89,
+          "precision": 100,
+          "recall": 80,
+          "tokens_used": 348
+        },
+        {
+          "id": "all-in-podcast-saas",
+          "name": "All-In Podcast — SaaS & AI Product Discussion",
+          "score": 96,
+          "passed": true,
+          "products_extracted": 8,
+          "products_expected": 8,
+          "f1": 88,
+          "precision": 88,
+          "recall": 88,
+          "tokens_used": 649
+        },
+        {
+          "id": "my-first-million-creator",
+          "name": "My First Million — Creator Economy Tools",
+          "score": 94,
+          "passed": true,
+          "products_extracted": 11,
+          "products_expected": 9,
+          "f1": 80,
+          "precision": 73,
+          "recall": 89,
+          "tokens_used": 932
+        }
+      ],
+      "summary": {
+        "avg_f1": 86,
+        "avg_precision": 87,
+        "avg_recall": 86,
+        "avg_products_per_episode": 8,
+        "avg_tokens": 643
+      }
+    }
+  ]
+}

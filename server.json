@@ -6,7 +6,7 @@
     "url": "https://github.com/teamsincetoday/podcast-commerce-mcp",
     "source": "github"
   },
-  "version": "0.1.1",
+  "version": "0.1.2",
   "packages": [
     {
       "registryType": "npm",
@@ -25,7 +25,7 @@
         },
         {
           "name": "MCP_API_KEYS",
-          "description": "Comma-separated paid API keys for unlimited calls (optional — omit for free tier: 200 calls/day)",
+          "description": "Comma-separated paid API keys for unlimited calls (optional \u2014 omit for free tier: 200 calls/day)",
           "isRequired": false,
           "format": "string",
           "isSecret": true

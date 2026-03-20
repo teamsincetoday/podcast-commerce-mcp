@@ -692,7 +692,7 @@ function getExamplesResponse() {
     examples: [
       {
         tool: "extract_podcast_products",
-        description: "Extract product and brand mentions from a podcast transcript. Returns structured data: product name, category, confidence score, recommendation strength, and sponsor segments. Cached by episode_id so downstream tools don't re-process.",
+        description: "Extract product and brand mentions from a podcast transcript. Returns structured data: product name, category, confidence score, recommendation_strength, affiliate_link, and aestheticTags (warmth/density/origin/tradition). Sponsor segments returned separately. Cached by episode_id so downstream tools don't re-process. affiliate_link is null until ChatAds is configured.",
         input: {
           transcript: "...today's episode is brought to you by AG1. I've been taking it every morning for six months now and honestly I feel great. Use code HUBERMAN for a free year's supply of Vitamin D... We also talked about Momentous supplements — their omega-3 is the only one I trust, cold-pressed, no fishy aftertaste. And I want to mention the Oura Ring. I've been wearing it for sleep tracking for two years. They're not a sponsor, just a genuine rec...",
           episode_id: "huberman-ep-312",
@@ -725,7 +725,7 @@ function getExamplesResponse() {
       },
       {
         tool: "analyze_episode_sponsors",
-        description: "Score sponsor segments from a cached podcast extraction. Returns CPM benchmark, read-through estimate, host fit score, and CTA quality score per sponsor. Uses cached data — no AI cost. Call after extract_podcast_products.",
+        description: "Score sponsor segments from a cached podcast extraction. Per-sponsor: estimated_cpm_usd, read-through, host_fit_score, CTA quality. Top-level aggregates: sponsor_count, avg_read_through, cta_rate (fraction with trackable CTAs — gate: cta_rate > 0 before running CTA extraction). No AI cost. Call after extract_podcast_products.",
         input: { episode_id: "huberman-ep-312" },
         output: {
           episode_id: "huberman-ep-312",
@@ -736,7 +736,7 @@ function getExamplesResponse() {
       },
       {
         tool: "track_product_trends",
-        description: "Identify rising and falling product trends across episodes. Shows mention velocity, trend direction (hot/rising/stable/fading), and episode count. Reads from cached extractions — no re-processing cost.",
+        description: "Identify rising and falling product trends across episodes. Per trend: brand (null for generics), category, trend direction (rising/stable/falling), episodes_present, total_mentions, avg_recommendation_strength (0–3 scale — use to prioritize affiliate outreach). Top-level: top_category (dominant category this period). Reads from cached extractions — no re-processing cost.",
         input: { show_id: "huberman-lab", weeks: 8 },
         output: {
           show_id: "huberman-lab",

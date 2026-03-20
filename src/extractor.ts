@@ -342,7 +342,7 @@ export async function extractProducts(
     }
   }
 
-  let response: Awaited<ReturnType<typeof client.chat.completions.create>> | undefined;
+  let response: OpenAI.Chat.Completions.ChatCompletion | undefined;
   let extractionError: unknown;
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
@@ -355,6 +355,7 @@ export async function extractProducts(
         response_format: { type: "json_object" },
         temperature: 0,
         max_tokens: 2000,
+        stream: false,
       });
       extractionError = undefined;
       break;

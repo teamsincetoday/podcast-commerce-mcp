@@ -94,7 +94,18 @@ const STRENGTH_RANK: Record<RecommendationStrength, number> = {
 // SYSTEM PROMPT
 // ============================================================================
 
-const EXTRACTION_SYSTEM_PROMPT = `You are a product and brand intelligence extractor specialized in podcast transcripts.
+export function buildExtractionPrompt(includeAesthetic: boolean): string {
+  const aestheticBlock = includeAesthetic
+    ? `
+For each product, also classify aesthetic character:
+- aesthetic_warmth: "warm" (cozy, earthy, comfort-focused), "cool" (clean, clinical, tech-forward), or "neutral"
+- aesthetic_density: "minimal" (simple, essential, pared back), "maximal" (rich, complex, indulgent), or "balanced"
+- aesthetic_origin: "natural" (organic, artisan, plant-based), "synthetic" (engineered, tech, processed), or "mixed"
+- aesthetic_tradition: "traditional" (heritage, classic, time-tested), "contemporary" (trending, innovative, modern), or "hybrid"
+`
+    : "";
+
+  return `You are a product and brand intelligence extractor specialized in podcast transcripts.
 
 Extract all product, brand, and service mentions from the provided podcast transcript.
 
@@ -113,13 +124,7 @@ Also identify sponsor segments:
 - read_type: "host_read", "mid_roll", "pre_roll", "post_roll", or "unknown"
 - estimated_read_through: 0.0-1.0 (0=skippable, 1=very compelling)
 - call_to_action: URL, promo code, or CTA text, or null
-
-For each product, also classify aesthetic character:
-- aesthetic_warmth: "warm" (cozy, earthy, comfort-focused), "cool" (clean, clinical, tech-forward), or "neutral"
-- aesthetic_density: "minimal" (simple, essential, pared back), "maximal" (rich, complex, indulgent), or "balanced"
-- aesthetic_origin: "natural" (organic, artisan, plant-based), "synthetic" (engineered, tech, processed), or "mixed"
-- aesthetic_tradition: "traditional" (heritage, classic, time-tested), "contemporary" (trending, innovative, modern), or "hybrid"
-
+${aestheticBlock}
 Rules:
 - Only include products with confidence >= 0.4
 - Deduplicate the same product (merge repeated mentions, use highest confidence)
@@ -127,6 +132,7 @@ Rules:
 
 Return ONLY valid JSON (no markdown, no explanation):
 {"products":[...],"sponsor_segments":[...]}`;
+}
 
 // ============================================================================
 // NORMALIZE HELPERS
@@ -139,6 +145,7 @@ Return ONLY valid JSON (no markdown, no explanation):
  */
 export function normalizeProducts(
   raw: OpenAIProductResponse["products"],
+  includeAesthetic = false,
 ): ProductMention[] {
   const productMap = new Map<string, ProductMention>();
 
@@ -185,8 +192,10 @@ export function normalizeProducts(
         mention_count: 1,
       };
 
-      const tags = parseAestheticTags(p);
-      if (tags) entry.aestheticTags = tags;
+      if (includeAesthetic) {
+        const tags = parseAestheticTags(p);
+        if (tags) entry.aestheticTags = tags;
+      }
 
       productMap.set(key, entry);
     }
@@ -307,6 +316,7 @@ export interface ExtractProductsParams {
   transcript: string;          // raw text or YouTube URL
   episodeId: string;
   categoryFilter?: string[] | null;
+  includeAesthetic?: boolean;
 }
 
 export interface RawExtractionResult {
@@ -323,7 +333,7 @@ export interface RawExtractionResult {
 export async function extractProducts(
   params: ExtractProductsParams,
 ): Promise<RawExtractionResult> {
-  const { transcript, episodeId, categoryFilter } = params;
+  const { transcript, episodeId, categoryFilter, includeAesthetic } = params;
 
   // Resolve to plain text (handles YouTube URLs)
   const text = await resolveTranscript(transcript);
@@ -357,7 +367,7 @@ export async function extractProducts(
         response = await client.chat.completions.create({
           model: OPENAI_MODEL,
           messages: [
-            { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
+            { role: "system", content: buildExtractionPrompt(includeAesthetic ?? false) },
             { role: "user", content: userMessage },
           ],
           response_format: { type: "json_object" },
@@ -410,7 +420,7 @@ export async function extractProducts(
     : [];
 
   // Normalize
-  let products = normalizeProducts(rawProducts);
+  let products = normalizeProducts(rawProducts, includeAesthetic ?? false);
   const sponsor_segments = normalizeSponsorSegments(rawSponsors);
 
   // Apply category filter after normalization if provided

@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { normalizeProducts, normalizeSponsorSegments, computeTrends, compareProductsAcrossShows, buildSponsorAnalysis } from "../src/extractor.js";
+import { normalizeProducts, normalizeSponsorSegments, computeTrends, compareProductsAcrossShows, buildSponsorAnalysis, buildExtractionPrompt } from "../src/extractor.js";
 import type { ExtractionResult, OpenAIProductResponse } from "../src/types.js";
 
 // ============================================================================
@@ -146,8 +146,8 @@ describe("normalizeProducts", () => {
     expect(normalizeProducts(raw)).toHaveLength(0);
   });
 
-  // EXP-2026-03-11-3: aesthetic tags coverage
-  it("attaches aestheticTags when all four aesthetic fields are valid", () => {
+  // EXP-2026-03-11-3: aesthetic tags opt-in coverage
+  it("attaches aestheticTags when includeAesthetic=true and all four fields are valid", () => {
     const raw: OpenAIProductResponse["products"] = [
       {
         name: "Headspace",
@@ -164,12 +164,33 @@ describe("normalizeProducts", () => {
       },
     ];
 
-    const result = normalizeProducts(raw);
+    const result = normalizeProducts(raw, true);
     expect(result[0]?.aestheticTags).toBeDefined();
     expect(result[0]?.aestheticTags?.warmth).toBe("warm");
     expect(result[0]?.aestheticTags?.density).toBe("minimal");
     expect(result[0]?.aestheticTags?.origin).toBe("natural");
     expect(result[0]?.aestheticTags?.tradition).toBe("contemporary");
+  });
+
+  it("omits aestheticTags by default (includeAesthetic=false) even when fields are present", () => {
+    const raw: OpenAIProductResponse["products"] = [
+      {
+        name: "Headspace",
+        category: "saas",
+        mention_context: "I meditate with Headspace daily",
+        speaker: "Host",
+        confidence: 0.9,
+        recommendation_strength: "strong",
+        affiliate_link: null,
+        aesthetic_warmth: "warm",
+        aesthetic_density: "minimal",
+        aesthetic_origin: "natural",
+        aesthetic_tradition: "contemporary",
+      },
+    ];
+
+    const result = normalizeProducts(raw); // default false
+    expect(result[0]?.aestheticTags).toBeUndefined();
   });
 
   it("omits aestheticTags when all aesthetic fields are absent", () => {
@@ -188,6 +209,27 @@ describe("normalizeProducts", () => {
     const result = normalizeProducts(raw);
     expect(result[0]?.aestheticTags).toBeUndefined();
   });
+});
+
+// ============================================================================
+// buildExtractionPrompt
+// ============================================================================
+
+describe("buildExtractionPrompt", () => {
+  it("excludes aesthetic instructions when includeAesthetic=false", () => {
+    const prompt = buildExtractionPrompt(false);
+    expect(prompt).not.toContain("aesthetic_warmth");
+    expect(prompt).not.toContain("aesthetic_density");
+  });
+
+  it("includes all 4 aesthetic axes when includeAesthetic=true", () => {
+    const prompt = buildExtractionPrompt(true);
+    expect(prompt).toContain("aesthetic_warmth");
+    expect(prompt).toContain("aesthetic_density");
+    expect(prompt).toContain("aesthetic_origin");
+    expect(prompt).toContain("aesthetic_tradition");
+  });
+
 });
 
 // ============================================================================

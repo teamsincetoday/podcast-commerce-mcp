@@ -10,6 +10,7 @@
   "readme": "./README.md",
   "categories": ["ECOMMERCE", "AI"],
   "tags": ["podcast", "affiliate-marketing", "product-extraction", "content-monetization", "nlp", "mcp"],
+  "pictureUrl": "https://raw.githubusercontent.com/teamsincetoday/podcast-commerce-mcp/master/assets/logo.png",
   "minMemoryMbytes": 128,
   "maxMemoryMbytes": 512
 }

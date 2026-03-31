@@ -1,0 +1,49 @@
+{
+  "title": "Podcast Commerce Extractor — Input",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "transcriptText": {
+      "title": "Podcast transcript (text)",
+      "type": "string",
+      "description": "Full podcast transcript as plain text. Provide this OR podcastUrl (not both). Max 100,000 characters.",
+      "editor": "textarea"
+    },
+    "podcastUrl": {
+      "title": "Podcast episode URL",
+      "type": "string",
+      "description": "URL of a podcast episode page with a transcript. The transcript will be fetched automatically. Provide this OR transcriptText.",
+      "editor": "textfield"
+    },
+    "episodeId": {
+      "title": "Episode ID (optional)",
+      "type": "string",
+      "description": "Unique identifier for the episode (used for caching). Example: 'huberman-ep-301'. Defaults to a timestamp if not provided.",
+      "editor": "textfield"
+    },
+    "showName": {
+      "title": "Show name (optional)",
+      "type": "string",
+      "description": "Name of the podcast show. Improves entity resolution accuracy.",
+      "editor": "textfield"
+    },
+    "categoryFilter": {
+      "title": "Category filter (optional)",
+      "type": "array",
+      "description": "Limit results to specific product categories. Options: physical_goods, supplement, software, service, book, course, equipment. Leave empty for all categories.",
+      "editor": "stringList",
+      "items": {
+        "type": "string"
+      }
+    },
+    "minConfidence": {
+      "title": "Minimum confidence threshold (optional)",
+      "type": "number",
+      "description": "Filter out products below this confidence score (0.0–1.0). Default: 0.0 (return all).",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0
+    }
+  },
+  "required": []
+}

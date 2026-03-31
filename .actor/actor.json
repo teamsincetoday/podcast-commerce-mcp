@@ -1,0 +1,14 @@
+{
+  "actorSpecification": 1,
+  "name": "podcast-commerce-mcp",
+  "title": "Podcast Commerce Extractor — MCP",
+  "description": "Extract affiliate products, brands, and sponsor data from podcast transcripts. Returns structured JSON with confidence scores, speaker attribution, and recommendation strength. Powered by podcast-commerce-mcp.",
+  "version": "0.1",
+  "buildTag": "latest",
+  "input": "./INPUT_SCHEMA.json",
+  "dockerfile": "./Dockerfile",
+  "readme": "../README.md",
+  "categories": ["AI", "ECOMMERCE", "MEDIA"],
+  "minMemoryMbytes": 128,
+  "maxMemoryMbytes": 512
+}

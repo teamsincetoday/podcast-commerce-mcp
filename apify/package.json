@@ -1,0 +1,13 @@
+{
+  "name": "podcast-commerce-mcp-actor",
+  "version": "0.1.0",
+  "description": "Apify Actor wrapper for podcast-commerce-mcp",
+  "main": "main.js",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "apify": "^3.0.0"
+  }
+}

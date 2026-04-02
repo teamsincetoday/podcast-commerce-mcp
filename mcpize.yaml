@@ -1,0 +1,24 @@
+version: 1
+name: podcast-commerce-mcp
+description: Agent-native podcast commerce intelligence. Extract product mentions from transcripts with speaker attribution, brand detection, confidence scoring, recommendation strength, and aesthetic classification. 6 tools including cross-show comparison and show notes generation.
+runtime: typescript
+entry: src/index.ts
+
+build:
+  install: npm ci
+  command: npm run build
+
+startCommand:
+  type: http
+  command: node dist/index.js
+
+secrets:
+  - name: OPENAI_API_KEY
+    required: true
+    description: OpenAI API key for product extraction
+  - name: MCP_API_KEYS
+    required: false
+    description: Comma-separated API keys for authenticated access (optional)
+  - name: X402_WALLET_ADDRESS
+    required: false
+    description: Ethereum wallet address for x402 micropayments (optional)

@@ -15,10 +15,12 @@ Give it a podcast transcript. Get back a structured list of every product mentio
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `transcript` | String | Yes (if no `url`) | Raw podcast transcript text |
-| `url` | String | Yes (if no `transcript`) | URL to fetch transcript from |
-| `category_filter` | String | No | Filter by category: `physical`, `saas`, `course`, `affiliate` |
-| `min_confidence` | Number | No | Minimum confidence score (0.0–1.0). Default: 0.7 |
+| `transcriptText` | String | Yes (if no `podcastUrl`) | Raw podcast transcript text (max 100,000 chars) |
+| `podcastUrl` | String | Yes (if no `transcriptText`) | URL to fetch transcript from |
+| `episodeId` | String | No | Unique episode ID for caching (e.g. `huberman-ep-301`) |
+| `showName` | String | No | Show name — improves entity resolution accuracy |
+| `categoryFilter` | Array | No | Filter by category: `physical_goods`, `supplement`, `software`, `service`, `book`, `course`, `equipment` |
+| `minConfidence` | Number | No | Minimum confidence score (0.0–1.0). Default: 0.0 |
 
 ## Output
 

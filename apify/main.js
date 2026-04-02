@@ -157,6 +157,9 @@ try {
     });
   }
 
+  // Charge for extraction (Pay-per-event pricing — 1 event per successful run)
+  await Actor.charge({ eventName: "extraction", count: 1 });
+
   // Also save summary metadata
   const summary = {
     episode_id: episodeId,

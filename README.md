@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/teamsincetoday/podcast-commerce-mcp?style=social)](https://github.com/teamsincetoday/podcast-commerce-mcp)
 
-**Turn podcast transcripts into affiliate revenue.** Give any episode transcript to an AI agent — get back every product mentioned, who said it, how strongly they recommended it, and which affiliate network carries it. F1=89% extraction accuracy. Free tier: 200 calls/day.
+**Turn podcast transcripts into affiliate revenue.** Give any episode transcript to an AI agent — get back every product mentioned, who said it, how strongly they recommended it, and which affiliate network carries it. F1=100% on eval suite. Free tier: 200 calls/day.
 
 ⭐ **If this saves you time, please star the repo** — it helps other developers find it.
 

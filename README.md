@@ -10,7 +10,7 @@
 
 > **Live endpoint**: `https://podcast-commerce-mcp.sincetoday.workers.dev/mcp` · [See examples](https://podcast-commerce-mcp.sincetoday.workers.dev/examples)
 
-Extract product mentions, sponsor segments, and product trends from podcast transcripts. Built for the agent-to-agent economy.
+Extract product mentions, sponsor segments, and product trends from podcast transcripts. Built on x402, the open payment standard backed by Shopify, Google, Microsoft, Visa, and the Linux Foundation.
 
 ## Tools
 

@@ -1,10 +1,11 @@
 /**
  * Podcast Commerce Intelligence MCP Server
  *
- * Three tools for the agent-to-agent economy:
- *   extract_podcast_products  — Extract products/brands from a transcript
- *   analyze_episode_sponsors  — Identify sponsor segments and read-through estimates
- *   track_product_trends      — Compare product mentions across multiple episodes
+ * Four tools for the agent-to-agent economy:
+ *   extract_podcast_products    — Extract products/brands from a transcript
+ *   analyze_episode_sponsors    — Identify sponsor segments and read-through estimates
+ *   track_product_trends        — Compare product mentions across multiple episodes
+ *   compare_products_across_shows — Cross-show product ranking with entity resolution
  *
  * Payment: 5 free calls/day per agent, then API key required ($0.001/call).
  * Transport: stdio only (v0).

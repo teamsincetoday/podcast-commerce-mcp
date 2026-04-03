@@ -1,6 +1,6 @@
 version: 1
 name: podcast-commerce-mcp
-description: Agent-native podcast commerce intelligence. Extract product mentions from transcripts with speaker attribution, brand detection, confidence scoring, recommendation strength, and aesthetic classification. 6 tools including cross-show comparison and show notes generation.
+description: Agent-native podcast commerce intelligence. Extract product mentions from transcripts with speaker attribution, brand detection, confidence scoring, recommendation strength, and aesthetic classification. 5 tools including cross-show comparison and show notes generation.
 runtime: typescript
 entry: src/index.ts
 

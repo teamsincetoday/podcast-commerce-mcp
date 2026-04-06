@@ -30,6 +30,7 @@
     "build": "tsc",
     "dev": "tsx watch src/cli.ts",
     "start": "node dist/cli.js",
+    "pretest": "node -e \"try { const db = require('better-sqlite3')(':memory:'); db.close(); } catch(e) { console.log('[pretest] better-sqlite3 binary mismatch — rebuilding...'); require('child_process').execSync('npm rebuild better-sqlite3', {stdio:'inherit'}); }\"",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
